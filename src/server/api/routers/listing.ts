@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getActiveProfileId } from "~/server/api/helpers/active-profile";
+import { env } from "~/env";
 
 export const listingRouter = createTRPCRouter({
   list: publicProcedure
@@ -25,6 +26,11 @@ export const listingRouter = createTRPCRouter({
           ...(input.source !== "ALL" ? { source: input.source } : {}),
           ...(input.onlyFavorites ? { favorite: true } : {}),
           ...(input.includeHidden ? {} : { hidden: false }),
+          // Zabezpieczenie: nigdy nie pokazuj PASSED poniżej progu wyniku
+          // (np. rekordy zapisane przed wprowadzeniem ScoreFilterStep).
+          ...(input.status === "PASSED"
+            ? { score: { gte: env.PRE_SCORE_THRESHOLD } }
+            : {}),
         },
         orderBy: [{ score: "desc" }, { scrapedAt: "desc" }],
       });

@@ -57,6 +57,9 @@ model Listing {
     petsAllowed Boolean? // null = nieznane
     hasParking  Boolean?
     imageUrl    String?
+    deposit     Int? // kaucja w zł, jeśli AI ją wyłuska
+    furnished   Boolean? // umeblowanie, null = nieznane
+    utilities   Int? // koszt mediów w zł/mies. (dokładny lub przybliżony), jeśli AI go wyłuska
 
     // wynik pipeline'u
     score        Float?

@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { ListingCollection } from "./collection";
 import { DedupeStep } from "./steps/dedupe";
 import { HardFilterStep } from "./steps/hard-filter";
+import { PreScoreStep } from "./steps/pre-score";
+import { TotalCostFilterStep } from "./steps/total-cost-filter";
 import type { PipelineContext, ScrapedListing } from "./types";
 import type { SearchProfile } from "../../../generated/prisma";
 
@@ -98,6 +100,85 @@ describe("HardFilterStep", () => {
       l({ externalId: "2", rooms: 3 }),
     ]);
     const out = await new HardFilterStep().run(col, ctx({ rooms: 2 }));
+    expect(out.active()).toHaveLength(1);
+  });
+});
+
+describe("PreScoreStep", () => {
+  it("odrzuca oferty poniżej progu wstępnej oceny", async () => {
+    const col = new ListingCollection([
+      l({ externalId: "1", price: 2000 }), // blisko dolnej granicy => dobry match cenowy
+      l({ externalId: "2", price: 4900 }), // blisko górnej granicy => słaby match cenowy
+    ]);
+    const out = await new PreScoreStep(0.6).run(
+      col,
+      ctx({ priceMin: 2000, priceMax: 5000, priceWeight: 5 }),
+    );
+    expect(out.active()).toHaveLength(1);
+    expect(out.active()[0]!.price).toBe(2000);
+    expect(out.rejected()[0]!.rejected!.reason).toContain("wstępne dopasowanie");
+  });
+
+  it("nie odrzuca gdy brak preferencji (score=1)", async () => {
+    const col = new ListingCollection([l({ externalId: "1", price: 4999 })]);
+    const out = await new PreScoreStep(0.6).run(col, ctx({}));
+    expect(out.active()).toHaveLength(1);
+  });
+});
+
+describe("TotalCostFilterStep", () => {
+  it("odrzuca gdy wynajem+czynsz+media > priceMax", async () => {
+    const col = new ListingCollection([
+      l({
+        externalId: "1",
+        price: 2500,
+        ai: {
+          petsAllowed: null,
+          hasParking: null,
+          district: null,
+          deposit: null,
+          adminRent: 400,
+          utilitiesCost: 300,
+          furnishings: [],
+          furnished: null,
+          isLongTermApartmentRental: true,
+          isRoomInSharedApartment: false,
+          summary: "",
+        },
+      }),
+    ]);
+    const out = await new TotalCostFilterStep().run(col, ctx({ priceMax: 3000 }));
+    expect(out.active()).toHaveLength(0);
+    expect(out.rejected()[0]!.rejected!.reason).toContain("koszt całkowity 3200");
+  });
+
+  it("nie odrzuca gdy media nieznane (nie zgadujemy kosztu)", async () => {
+    const col = new ListingCollection([l({ externalId: "1", price: 2900 })]);
+    const out = await new TotalCostFilterStep().run(col, ctx({ priceMax: 3000 }));
+    expect(out.active()).toHaveLength(1);
+  });
+
+  it("nie odrzuca gdy brak priceMax", async () => {
+    const col = new ListingCollection([
+      l({
+        externalId: "1",
+        price: 5000,
+        ai: {
+          petsAllowed: null,
+          hasParking: null,
+          district: null,
+          deposit: null,
+          adminRent: 1000,
+          utilitiesCost: 1000,
+          furnishings: [],
+          furnished: null,
+          isLongTermApartmentRental: true,
+          isRoomInSharedApartment: false,
+          summary: "",
+        },
+      }),
+    ]);
+    const out = await new TotalCostFilterStep().run(col, ctx({}));
     expect(out.active()).toHaveLength(1);
   });
 });

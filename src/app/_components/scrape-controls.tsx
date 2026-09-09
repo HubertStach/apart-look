@@ -9,11 +9,8 @@ const STEP_ORDER = [
   "Scraper (mock)",
   "Deduplikacja",
   "Filtr twardy",
-  "Pobranie opisów",
-  "Analiza AI",
-  "Weryfikacja AI",
-  "Ocena dopasowania",
-  "Zapis do bazy",
+  "Wstępna ocena",
+  "Selekcja i zapis (na bieżąco)",
 ];
 
 export function ScrapeControls({ hasProfile }: { hasProfile: boolean }) {
@@ -38,16 +35,25 @@ export function ScrapeControls({ hasProfile }: { hasProfile: boolean }) {
     },
   });
 
-  // po zakończeniu przebiegu (przejście RUNNING → DONE) odśwież listę raz
+  // W trakcie przebiegu odświeżaj listę na bieżąco (mieszkania dopisują się
+  // strumieniowo), oraz raz jeszcze po zakończeniu (RUNNING → DONE).
   const prevStatus = useRef<string | undefined>(undefined);
+  const prevSaved = useRef<number>(0);
   useEffect(() => {
     const cur = status.data?.status;
+    const saved = status.data?.stats.saved ?? 0;
+    // nowe zapisy w trakcie biegu → odśwież tablicę główną
+    if (cur === "RUNNING" && saved !== prevSaved.current) {
+      void utils.listing.list.invalidate();
+      void utils.listing.rejectedSummary.invalidate();
+    }
     if (prevStatus.current === "RUNNING" && cur === "DONE") {
       void utils.listing.list.invalidate();
       void utils.listing.rejectedSummary.invalidate();
     }
+    prevSaved.current = saved;
     prevStatus.current = cur;
-  }, [status.data?.status, utils]);
+  }, [status.data?.status, status.data?.stats.saved, utils]);
 
   const run = status.data;
   const stepIndex = run?.currentStep ? STEP_ORDER.indexOf(run.currentStep) : -1;

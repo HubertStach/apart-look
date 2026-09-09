@@ -3,14 +3,12 @@ import { ListingPipeline } from "./pipeline";
 import type { PipelineStats } from "./types";
 import { DedupeStep } from "./steps/dedupe";
 import { HardFilterStep } from "./steps/hard-filter";
-import { ScoreStep } from "./steps/score";
-import { PersistStep } from "./steps/persist";
+import { PreScoreStep } from "./steps/pre-score";
+import { StreamProcessStep } from "./steps/stream-process";
 import { MockScrapeStep } from "./steps/mock-scrape";
 import { ScrapeOlxStep } from "./steps/scrape-olx";
 import { ScrapeOtodomStep } from "./steps/scrape-otodom";
-import { FetchDetailsStep } from "./steps/fetch-details";
-import { AiExtractStep } from "./steps/ai-extract";
-import { AiVerifyStep } from "./steps/ai-verify";
+import { env } from "~/env";
 
 export { ListingPipeline } from "./pipeline";
 export { ListingCollection } from "./collection";
@@ -21,7 +19,9 @@ export { ListingCollection } from "./collection";
  *
  * `useMock` podmienia realne scrapery na deterministyczny mock (testy/rozwój UI).
  */
-export function buildDefaultPipeline(opts: { useMock?: boolean } = {}): ListingPipeline {
+export function buildDefaultPipeline(
+  opts: { useMock?: boolean; preScoreThreshold?: number } = {},
+): ListingPipeline {
   const pipeline = new ListingPipeline();
 
   if (opts.useMock) {
@@ -31,14 +31,14 @@ export function buildDefaultPipeline(opts: { useMock?: boolean } = {}): ListingP
     pipeline.use(new ScrapeOtodomStep());
   }
 
+  const threshold = opts.preScoreThreshold ?? env.PRE_SCORE_THRESHOLD;
   pipeline
     .use(new DedupeStep())
     .use(new HardFilterStep())
-    .use(new FetchDetailsStep())
-    .use(new AiExtractStep())
-    .use(new AiVerifyStep())
-    .use(new ScoreStep())
-    .use(new PersistStep());
+    .use(new PreScoreStep(threshold))
+    // Strumieniowy ogon: dla każdego ogłoszenia po kolei robi AI + selekcję
+    // i NATYCHMIAST zapisuje wynik → mieszkania pojawiają się na bieżąco.
+    .use(new StreamProcessStep(threshold));
 
   return pipeline;
 }
@@ -47,6 +47,7 @@ const EMPTY_STATS: PipelineStats = {
   scraped: 0,
   deduped: 0,
   filtered: 0,
+  preScored: 0,
   aiChecked: 0,
   passed: 0,
   rejected: 0,
@@ -61,7 +62,7 @@ export async function runPipeline(
   db: PrismaClient,
   profile: SearchProfile,
   runId: string,
-  opts: { useMock?: boolean } = {},
+  opts: { useMock?: boolean; preScoreThreshold?: number } = {},
 ): Promise<void> {
   const stats: PipelineStats = { ...EMPTY_STATS };
 

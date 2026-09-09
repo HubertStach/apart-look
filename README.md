@@ -50,7 +50,7 @@ npm run db:push        # tworzy tabele w prisma/db.sqlite
 
 # 4. (opcjonalnie) model AI
 ollama serve
-ollama pull qwen2.5:7b-instruct   # lub SpeakLeash/bielik-11b-v2.3-instruct (lepszy PL)
+ollama pull SpeakLeash/bielik-minitron-7B-v3.0-instruct:Q4_K_M 
 
 # 5. dev
 npm run dev            # http://localhost:3000
@@ -66,7 +66,7 @@ działanie całego pipeline'u na przykładowych danych.
 |---|---|---|
 | `DATABASE_URL` | ścieżka SQLite | `file:./db.sqlite` |
 | `OLLAMA_URL` | adres Ollamy | `http://localhost:11434` |
-| `OLLAMA_MODEL` | model do ekstrakcji | `qwen2.5:7b-instruct` |
+| `OLLAMA_MODEL` | model do ekstrakcji | `gemma4:e2b` |
 | `SCRAPE_CRON` | harmonogram (cron); pusty = wyłączony | — |
 | `SCRAPE_MAX_PAGES` | limit stron na portal / przebieg | `3` |
 

@@ -71,6 +71,9 @@ export function ListingCard({ listing }: { listing: Listing }) {
           {listing.price != null && (
             <span className="text-base font-bold text-cocoa">
               {listing.price.toLocaleString("pl-PL")} zł
+              {listing.utilities == null && (
+                <span className="ml-1 text-xs font-normal text-mocha/60">+ media</span>
+              )}
             </span>
           )}
           {listing.area != null && <span className="text-mocha">{listing.area} m²</span>}
@@ -83,11 +86,45 @@ export function ListingCard({ listing }: { listing: Listing }) {
           {listing.petsAllowed === true && <Badge tone="green">🐾 zwierzęta OK</Badge>}
           {listing.petsAllowed === false && <Badge tone="red">🐾 bez zwierząt</Badge>}
           {listing.hasParking === true && <Badge tone="green">🅿️ parking</Badge>}
-          {listing.rentExtra != null && <Badge>+ {listing.rentExtra} zł czynsz</Badge>}
+          {listing.furnished === true && <Badge tone="green">umeblowane</Badge>}
+          {listing.furnished === false && <Badge tone="red">nieumeblowane</Badge>}
         </div>
 
+        {(listing.price != null ||
+          listing.rentExtra != null ||
+          listing.utilities != null ||
+          listing.deposit != null) && (
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-mocha/80">
+            {listing.price != null && <span>wynajem: {listing.price.toLocaleString("pl-PL")} zł</span>}
+            {listing.rentExtra != null && (
+              <span>czynsz: {listing.rentExtra.toLocaleString("pl-PL")} zł</span>
+            )}
+            {listing.utilities != null ? (
+              <span>media: {listing.utilities.toLocaleString("pl-PL")} zł</span>
+            ) : (
+              <span className="italic text-mocha/50">media: nieznane</span>
+            )}
+            {listing.deposit != null && (
+              <span>kaucja: {listing.deposit.toLocaleString("pl-PL")} zł</span>
+            )}
+            {listing.price != null && (
+              <span className="font-semibold text-cocoa">
+                razem:{" "}
+                {(
+                  listing.price +
+                  (listing.rentExtra ?? 0) +
+                  (listing.utilities ?? 0)
+                ).toLocaleString("pl-PL")}{" "}
+                zł{listing.utilities == null && "+"}
+              </span>
+            )}
+          </div>
+        )}
+
         {listing.aiSummary && (
-          <p className="line-clamp-2 text-xs text-mocha/80">{listing.aiSummary}</p>
+          <p className="line-clamp-2 text-xs text-mocha/80" title={listing.aiSummary}>
+            {listing.aiSummary}
+          </p>
         )}
 
         <div className="mt-auto flex items-center gap-3 pt-1 text-xs">

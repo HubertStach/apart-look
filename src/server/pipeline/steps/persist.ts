@@ -1,9 +1,63 @@
 import type { ListingCollection } from "../collection";
 import type { PipelineContext, PipelineStep, ScrapedListing } from "../types";
+import type { PrismaClient } from "../../../../generated/prisma";
+
+/** Buduje rekord DB z ogłoszenia (wspólne dla zapisu batch i strumieniowego). */
+export function buildListingData(l: ScrapedListing) {
+  const passed = !l.rejected;
+  return {
+    url: l.url,
+    title: l.title,
+    description: l.description ?? null,
+    price: l.price ?? null,
+    rentExtra: l.ai?.adminRent ?? l.rentExtra ?? null,
+    area: l.area ?? null,
+    rooms: l.rooms ?? null,
+    city: l.city ?? null,
+    district: l.ai?.district ?? l.district ?? null,
+    petsAllowed: l.ai?.petsAllowed ?? l.petsAllowed ?? null,
+    hasParking: l.ai?.hasParking ?? l.hasParking ?? null,
+    imageUrl: l.imageUrl ?? null,
+    deposit: l.ai?.deposit ?? null,
+    furnished: l.ai?.furnished ?? null,
+    utilities: l.ai?.utilitiesCost ?? null,
+    score: l.score ?? null,
+    aiSummary: l.ai?.summary ?? null,
+    aiExtracted: l.ai ? JSON.stringify(l.ai) : null,
+    status: passed ? "PASSED" : "REJECTED",
+    rejectReason: l.rejected?.reason ?? null,
+  };
+}
+
+/**
+ * Upsert pojedynczego ogłoszenia po kluczu [profileId, source, externalId].
+ * Przy update NIE nadpisuje `hidden`/`favorite` ustawionych przez użytkownika.
+ */
+export async function persistListing(
+  db: PrismaClient,
+  profileId: string,
+  l: ScrapedListing,
+): Promise<void> {
+  const data = buildListingData(l);
+  await db.listing.upsert({
+    where: {
+      profileId_source_externalId: {
+        profileId,
+        source: l.source,
+        externalId: l.externalId,
+      },
+    },
+    update: data,
+    create: { profileId, source: l.source, externalId: l.externalId, ...data },
+  });
+}
 
 /**
  * Zapisuje wyniki do bazy przez upsert po kluczu [profileId, source, externalId].
  * Aktywne oferty => status PASSED, odrzucone => REJECTED (audyt powodów).
+ *
+ * Uwaga: w domyślnym pipeline zapis jest strumieniowy (`StreamProcessStep`),
+ * więc ten krok batch nie jest w łańcuchu — pozostaje jako gotowy klocek.
  */
 export class PersistStep implements PipelineStep {
   readonly name = "Zapis do bazy";
@@ -13,44 +67,7 @@ export class PersistStep implements PipelineStep {
     let saved = 0;
 
     for (const l of col.all()) {
-      const passed = !l.rejected;
-      const data = {
-        url: l.url,
-        title: l.title,
-        description: l.description ?? null,
-        price: l.price ?? null,
-        rentExtra: l.ai?.adminRent ?? l.rentExtra ?? null,
-        area: l.area ?? null,
-        rooms: l.rooms ?? null,
-        city: l.city ?? null,
-        district: l.ai?.district ?? l.district ?? null,
-        petsAllowed: l.ai?.petsAllowed ?? l.petsAllowed ?? null,
-        hasParking: l.ai?.hasParking ?? l.hasParking ?? null,
-        imageUrl: l.imageUrl ?? null,
-        score: l.score ?? null,
-        aiSummary: l.ai?.summary ?? null,
-        aiExtracted: l.ai ? JSON.stringify(l.ai) : null,
-        status: passed ? "PASSED" : "REJECTED",
-        rejectReason: l.rejected?.reason ?? null,
-      };
-
-      await db.listing.upsert({
-        where: {
-          profileId_source_externalId: {
-            profileId: profile.id,
-            source: l.source,
-            externalId: l.externalId,
-          },
-        },
-        // przy update NIE nadpisujemy `hidden`/`favorite` ustawionych przez użytkownika
-        update: data,
-        create: {
-          profileId: profile.id,
-          source: l.source,
-          externalId: l.externalId,
-          ...data,
-        },
-      });
+      await persistListing(db, profile.id, l);
       saved++;
     }
 

@@ -123,18 +123,31 @@ export const profileRouter = createTRPCRouter({
       };
 
       if (input.id) {
-        return ctx.db.searchProfile.update({
-          where: { id: input.id },
-          data,
-        });
+        return updateProfileAndClearListings(ctx.db, input.id, data);
       }
 
       // Brak id → zapisz do aktywnego profilu, a jeśli żadnego nie ma, utwórz go
       // jako aktywny (pierwsze uruchomienie aplikacji).
       const active = await getActiveProfile(ctx.db);
       if (active) {
-        return ctx.db.searchProfile.update({ where: { id: active.id }, data });
+        return updateProfileAndClearListings(ctx.db, active.id, data);
       }
       return ctx.db.searchProfile.create({ data: { ...data, isActive: true } });
     }),
 });
+
+/**
+ * Aktualizuje profil i czyści jego dotychczasowe wyniki wyszukiwania —
+ * zmiana kryteriów unieważnia poprzednie dopasowania. ZACHOWUJE ulubione
+ * (favorite=true) niezależnie od nowych kryteriów.
+ */
+async function updateProfileAndClearListings(
+  db: Parameters<typeof getActiveProfile>[0],
+  profileId: string,
+  data: Parameters<typeof db.searchProfile.update>[0]["data"],
+) {
+  await db.listing.deleteMany({
+    where: { profileId, favorite: false },
+  });
+  return db.searchProfile.update({ where: { id: profileId }, data });
+}

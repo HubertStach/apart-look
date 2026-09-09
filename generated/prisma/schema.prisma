@@ -12,8 +12,9 @@ datasource db {
 }
 
 model SearchProfile {
-  id   String @id @default(cuid())
-  name String
+  id       String  @id @default(cuid())
+  name     String
+  isActive Boolean @default(false) // jeden aktywny profil naraz
 
   // MUST-HAVE (twarde filtry)
   city  String
@@ -56,6 +57,9 @@ model Listing {
   petsAllowed Boolean? // null = nieznane
   hasParking  Boolean?
   imageUrl    String?
+  deposit     Int? // kaucja w zł, jeśli AI ją wyłuska
+  furnished   Boolean? // umeblowanie, null = nieznane
+  utilities   Int? // koszt mediów w zł/mies. (dokładny lub przybliżony), jeśli AI go wyłuska
 
   // wynik pipeline'u
   score        Float?

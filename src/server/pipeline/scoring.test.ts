@@ -82,8 +82,11 @@ describe("computeScore", () => {
         district: null,
         deposit: null,
         adminRent: null,
+        utilitiesCost: null,
+        furnishings: [],
         furnished: null,
         isLongTermApartmentRental: true,
+        isRoomInSharedApartment: false,
         summary: "",
       },
     });

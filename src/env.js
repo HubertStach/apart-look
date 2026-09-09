@@ -20,6 +20,9 @@ export const env = createEnv({
     SCRAPE_MAX_PAGES: z.coerce.number().int().positive().default(3),
     // Silnik pobierania: auto (http z fallbackiem na przeglądarkę) / http / browser
     SCRAPE_ENGINE: z.enum(["auto", "http", "browser"]).default("auto"),
+    // Próg wstępnej oceny (bez AI) — oferty poniżej tego progu (0..1) nie trafiają
+    // do AI (pobranie opisu, ekstrakcja, weryfikacja). Niższy próg = więcej ofert do AI.
+    PRE_SCORE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.6),
   },
 
   /**
@@ -43,6 +46,7 @@ export const env = createEnv({
     SCRAPE_CRON: process.env.SCRAPE_CRON,
     SCRAPE_MAX_PAGES: process.env.SCRAPE_MAX_PAGES,
     SCRAPE_ENGINE: process.env.SCRAPE_ENGINE,
+    PRE_SCORE_THRESHOLD: process.env.PRE_SCORE_THRESHOLD,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

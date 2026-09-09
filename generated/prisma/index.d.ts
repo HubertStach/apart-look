@@ -2447,6 +2447,8 @@ export namespace Prisma {
     rentExtra: number | null
     area: number | null
     rooms: number | null
+    deposit: number | null
+    utilities: number | null
     score: number | null
   }
 
@@ -2455,6 +2457,8 @@ export namespace Prisma {
     rentExtra: number | null
     area: number | null
     rooms: number | null
+    deposit: number | null
+    utilities: number | null
     score: number | null
   }
 
@@ -2474,6 +2478,9 @@ export namespace Prisma {
     petsAllowed: boolean | null
     hasParking: boolean | null
     imageUrl: string | null
+    deposit: number | null
+    furnished: boolean | null
+    utilities: number | null
     score: number | null
     aiSummary: string | null
     aiExtracted: string | null
@@ -2501,6 +2508,9 @@ export namespace Prisma {
     petsAllowed: boolean | null
     hasParking: boolean | null
     imageUrl: string | null
+    deposit: number | null
+    furnished: boolean | null
+    utilities: number | null
     score: number | null
     aiSummary: string | null
     aiExtracted: string | null
@@ -2528,6 +2538,9 @@ export namespace Prisma {
     petsAllowed: number
     hasParking: number
     imageUrl: number
+    deposit: number
+    furnished: number
+    utilities: number
     score: number
     aiSummary: number
     aiExtracted: number
@@ -2546,6 +2559,8 @@ export namespace Prisma {
     rentExtra?: true
     area?: true
     rooms?: true
+    deposit?: true
+    utilities?: true
     score?: true
   }
 
@@ -2554,6 +2569,8 @@ export namespace Prisma {
     rentExtra?: true
     area?: true
     rooms?: true
+    deposit?: true
+    utilities?: true
     score?: true
   }
 
@@ -2573,6 +2590,9 @@ export namespace Prisma {
     petsAllowed?: true
     hasParking?: true
     imageUrl?: true
+    deposit?: true
+    furnished?: true
+    utilities?: true
     score?: true
     aiSummary?: true
     aiExtracted?: true
@@ -2600,6 +2620,9 @@ export namespace Prisma {
     petsAllowed?: true
     hasParking?: true
     imageUrl?: true
+    deposit?: true
+    furnished?: true
+    utilities?: true
     score?: true
     aiSummary?: true
     aiExtracted?: true
@@ -2627,6 +2650,9 @@ export namespace Prisma {
     petsAllowed?: true
     hasParking?: true
     imageUrl?: true
+    deposit?: true
+    furnished?: true
+    utilities?: true
     score?: true
     aiSummary?: true
     aiExtracted?: true
@@ -2741,6 +2767,9 @@ export namespace Prisma {
     petsAllowed: boolean | null
     hasParking: boolean | null
     imageUrl: string | null
+    deposit: number | null
+    furnished: boolean | null
+    utilities: number | null
     score: number | null
     aiSummary: string | null
     aiExtracted: string | null
@@ -2787,6 +2816,9 @@ export namespace Prisma {
     petsAllowed?: boolean
     hasParking?: boolean
     imageUrl?: boolean
+    deposit?: boolean
+    furnished?: boolean
+    utilities?: boolean
     score?: boolean
     aiSummary?: boolean
     aiExtracted?: boolean
@@ -2815,6 +2847,9 @@ export namespace Prisma {
     petsAllowed?: boolean
     hasParking?: boolean
     imageUrl?: boolean
+    deposit?: boolean
+    furnished?: boolean
+    utilities?: boolean
     score?: boolean
     aiSummary?: boolean
     aiExtracted?: boolean
@@ -2843,6 +2878,9 @@ export namespace Prisma {
     petsAllowed?: boolean
     hasParking?: boolean
     imageUrl?: boolean
+    deposit?: boolean
+    furnished?: boolean
+    utilities?: boolean
     score?: boolean
     aiSummary?: boolean
     aiExtracted?: boolean
@@ -2871,6 +2909,9 @@ export namespace Prisma {
     petsAllowed?: boolean
     hasParking?: boolean
     imageUrl?: boolean
+    deposit?: boolean
+    furnished?: boolean
+    utilities?: boolean
     score?: boolean
     aiSummary?: boolean
     aiExtracted?: boolean
@@ -2882,7 +2923,7 @@ export namespace Prisma {
     profileId?: boolean
   }
 
-  export type ListingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "source" | "externalId" | "url" | "title" | "description" | "price" | "rentExtra" | "area" | "rooms" | "city" | "district" | "petsAllowed" | "hasParking" | "imageUrl" | "score" | "aiSummary" | "aiExtracted" | "status" | "rejectReason" | "hidden" | "favorite" | "scrapedAt" | "profileId", ExtArgs["result"]["listing"]>
+  export type ListingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "source" | "externalId" | "url" | "title" | "description" | "price" | "rentExtra" | "area" | "rooms" | "city" | "district" | "petsAllowed" | "hasParking" | "imageUrl" | "deposit" | "furnished" | "utilities" | "score" | "aiSummary" | "aiExtracted" | "status" | "rejectReason" | "hidden" | "favorite" | "scrapedAt" | "profileId", ExtArgs["result"]["listing"]>
   export type ListingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     profile?: boolean | SearchProfileDefaultArgs<ExtArgs>
   }
@@ -2914,6 +2955,9 @@ export namespace Prisma {
       petsAllowed: boolean | null
       hasParking: boolean | null
       imageUrl: string | null
+      deposit: number | null
+      furnished: boolean | null
+      utilities: number | null
       score: number | null
       aiSummary: string | null
       aiExtracted: string | null
@@ -3362,6 +3406,9 @@ export namespace Prisma {
     readonly petsAllowed: FieldRef<"Listing", 'Boolean'>
     readonly hasParking: FieldRef<"Listing", 'Boolean'>
     readonly imageUrl: FieldRef<"Listing", 'String'>
+    readonly deposit: FieldRef<"Listing", 'Int'>
+    readonly furnished: FieldRef<"Listing", 'Boolean'>
+    readonly utilities: FieldRef<"Listing", 'Int'>
     readonly score: FieldRef<"Listing", 'Float'>
     readonly aiSummary: FieldRef<"Listing", 'String'>
     readonly aiExtracted: FieldRef<"Listing", 'String'>
@@ -4930,6 +4977,9 @@ export namespace Prisma {
     petsAllowed: 'petsAllowed',
     hasParking: 'hasParking',
     imageUrl: 'imageUrl',
+    deposit: 'deposit',
+    furnished: 'furnished',
+    utilities: 'utilities',
     score: 'score',
     aiSummary: 'aiSummary',
     aiExtracted: 'aiExtracted',
@@ -5166,6 +5216,9 @@ export namespace Prisma {
     petsAllowed?: BoolNullableFilter<"Listing"> | boolean | null
     hasParking?: BoolNullableFilter<"Listing"> | boolean | null
     imageUrl?: StringNullableFilter<"Listing"> | string | null
+    deposit?: IntNullableFilter<"Listing"> | number | null
+    furnished?: BoolNullableFilter<"Listing"> | boolean | null
+    utilities?: IntNullableFilter<"Listing"> | number | null
     score?: FloatNullableFilter<"Listing"> | number | null
     aiSummary?: StringNullableFilter<"Listing"> | string | null
     aiExtracted?: StringNullableFilter<"Listing"> | string | null
@@ -5194,6 +5247,9 @@ export namespace Prisma {
     petsAllowed?: SortOrderInput | SortOrder
     hasParking?: SortOrderInput | SortOrder
     imageUrl?: SortOrderInput | SortOrder
+    deposit?: SortOrderInput | SortOrder
+    furnished?: SortOrderInput | SortOrder
+    utilities?: SortOrderInput | SortOrder
     score?: SortOrderInput | SortOrder
     aiSummary?: SortOrderInput | SortOrder
     aiExtracted?: SortOrderInput | SortOrder
@@ -5226,6 +5282,9 @@ export namespace Prisma {
     petsAllowed?: BoolNullableFilter<"Listing"> | boolean | null
     hasParking?: BoolNullableFilter<"Listing"> | boolean | null
     imageUrl?: StringNullableFilter<"Listing"> | string | null
+    deposit?: IntNullableFilter<"Listing"> | number | null
+    furnished?: BoolNullableFilter<"Listing"> | boolean | null
+    utilities?: IntNullableFilter<"Listing"> | number | null
     score?: FloatNullableFilter<"Listing"> | number | null
     aiSummary?: StringNullableFilter<"Listing"> | string | null
     aiExtracted?: StringNullableFilter<"Listing"> | string | null
@@ -5254,6 +5313,9 @@ export namespace Prisma {
     petsAllowed?: SortOrderInput | SortOrder
     hasParking?: SortOrderInput | SortOrder
     imageUrl?: SortOrderInput | SortOrder
+    deposit?: SortOrderInput | SortOrder
+    furnished?: SortOrderInput | SortOrder
+    utilities?: SortOrderInput | SortOrder
     score?: SortOrderInput | SortOrder
     aiSummary?: SortOrderInput | SortOrder
     aiExtracted?: SortOrderInput | SortOrder
@@ -5289,6 +5351,9 @@ export namespace Prisma {
     petsAllowed?: BoolNullableWithAggregatesFilter<"Listing"> | boolean | null
     hasParking?: BoolNullableWithAggregatesFilter<"Listing"> | boolean | null
     imageUrl?: StringNullableWithAggregatesFilter<"Listing"> | string | null
+    deposit?: IntNullableWithAggregatesFilter<"Listing"> | number | null
+    furnished?: BoolNullableWithAggregatesFilter<"Listing"> | boolean | null
+    utilities?: IntNullableWithAggregatesFilter<"Listing"> | number | null
     score?: FloatNullableWithAggregatesFilter<"Listing"> | number | null
     aiSummary?: StringNullableWithAggregatesFilter<"Listing"> | string | null
     aiExtracted?: StringNullableWithAggregatesFilter<"Listing"> | string | null
@@ -5548,6 +5613,9 @@ export namespace Prisma {
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
+    deposit?: number | null
+    furnished?: boolean | null
+    utilities?: number | null
     score?: number | null
     aiSummary?: string | null
     aiExtracted?: string | null
@@ -5575,6 +5643,9 @@ export namespace Prisma {
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
+    deposit?: number | null
+    furnished?: boolean | null
+    utilities?: number | null
     score?: number | null
     aiSummary?: string | null
     aiExtracted?: string | null
@@ -5602,6 +5673,9 @@ export namespace Prisma {
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deposit?: NullableIntFieldUpdateOperationsInput | number | null
+    furnished?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    utilities?: NullableIntFieldUpdateOperationsInput | number | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     aiSummary?: NullableStringFieldUpdateOperationsInput | string | null
     aiExtracted?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5629,6 +5703,9 @@ export namespace Prisma {
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deposit?: NullableIntFieldUpdateOperationsInput | number | null
+    furnished?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    utilities?: NullableIntFieldUpdateOperationsInput | number | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     aiSummary?: NullableStringFieldUpdateOperationsInput | string | null
     aiExtracted?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5656,6 +5733,9 @@ export namespace Prisma {
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
+    deposit?: number | null
+    furnished?: boolean | null
+    utilities?: number | null
     score?: number | null
     aiSummary?: string | null
     aiExtracted?: string | null
@@ -5683,6 +5763,9 @@ export namespace Prisma {
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deposit?: NullableIntFieldUpdateOperationsInput | number | null
+    furnished?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    utilities?: NullableIntFieldUpdateOperationsInput | number | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     aiSummary?: NullableStringFieldUpdateOperationsInput | string | null
     aiExtracted?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5709,6 +5792,9 @@ export namespace Prisma {
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deposit?: NullableIntFieldUpdateOperationsInput | number | null
+    furnished?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    utilities?: NullableIntFieldUpdateOperationsInput | number | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     aiSummary?: NullableStringFieldUpdateOperationsInput | string | null
     aiExtracted?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6093,6 +6179,9 @@ export namespace Prisma {
     petsAllowed?: SortOrder
     hasParking?: SortOrder
     imageUrl?: SortOrder
+    deposit?: SortOrder
+    furnished?: SortOrder
+    utilities?: SortOrder
     score?: SortOrder
     aiSummary?: SortOrder
     aiExtracted?: SortOrder
@@ -6109,6 +6198,8 @@ export namespace Prisma {
     rentExtra?: SortOrder
     area?: SortOrder
     rooms?: SortOrder
+    deposit?: SortOrder
+    utilities?: SortOrder
     score?: SortOrder
   }
 
@@ -6128,6 +6219,9 @@ export namespace Prisma {
     petsAllowed?: SortOrder
     hasParking?: SortOrder
     imageUrl?: SortOrder
+    deposit?: SortOrder
+    furnished?: SortOrder
+    utilities?: SortOrder
     score?: SortOrder
     aiSummary?: SortOrder
     aiExtracted?: SortOrder
@@ -6155,6 +6249,9 @@ export namespace Prisma {
     petsAllowed?: SortOrder
     hasParking?: SortOrder
     imageUrl?: SortOrder
+    deposit?: SortOrder
+    furnished?: SortOrder
+    utilities?: SortOrder
     score?: SortOrder
     aiSummary?: SortOrder
     aiExtracted?: SortOrder
@@ -6171,6 +6268,8 @@ export namespace Prisma {
     rentExtra?: SortOrder
     area?: SortOrder
     rooms?: SortOrder
+    deposit?: SortOrder
+    utilities?: SortOrder
     score?: SortOrder
   }
 
@@ -6679,6 +6778,9 @@ export namespace Prisma {
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
+    deposit?: number | null
+    furnished?: boolean | null
+    utilities?: number | null
     score?: number | null
     aiSummary?: string | null
     aiExtracted?: string | null
@@ -6705,6 +6807,9 @@ export namespace Prisma {
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
+    deposit?: number | null
+    furnished?: boolean | null
+    utilities?: number | null
     score?: number | null
     aiSummary?: string | null
     aiExtracted?: string | null
@@ -6788,6 +6893,9 @@ export namespace Prisma {
     petsAllowed?: BoolNullableFilter<"Listing"> | boolean | null
     hasParking?: BoolNullableFilter<"Listing"> | boolean | null
     imageUrl?: StringNullableFilter<"Listing"> | string | null
+    deposit?: IntNullableFilter<"Listing"> | number | null
+    furnished?: BoolNullableFilter<"Listing"> | boolean | null
+    utilities?: IntNullableFilter<"Listing"> | number | null
     score?: FloatNullableFilter<"Listing"> | number | null
     aiSummary?: StringNullableFilter<"Listing"> | string | null
     aiExtracted?: StringNullableFilter<"Listing"> | string | null
@@ -7061,6 +7169,9 @@ export namespace Prisma {
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
+    deposit?: number | null
+    furnished?: boolean | null
+    utilities?: number | null
     score?: number | null
     aiSummary?: string | null
     aiExtracted?: string | null
@@ -7097,6 +7208,9 @@ export namespace Prisma {
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deposit?: NullableIntFieldUpdateOperationsInput | number | null
+    furnished?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    utilities?: NullableIntFieldUpdateOperationsInput | number | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     aiSummary?: NullableStringFieldUpdateOperationsInput | string | null
     aiExtracted?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7123,6 +7237,9 @@ export namespace Prisma {
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deposit?: NullableIntFieldUpdateOperationsInput | number | null
+    furnished?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    utilities?: NullableIntFieldUpdateOperationsInput | number | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     aiSummary?: NullableStringFieldUpdateOperationsInput | string | null
     aiExtracted?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7149,6 +7266,9 @@ export namespace Prisma {
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deposit?: NullableIntFieldUpdateOperationsInput | number | null
+    furnished?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    utilities?: NullableIntFieldUpdateOperationsInput | number | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     aiSummary?: NullableStringFieldUpdateOperationsInput | string | null
     aiExtracted?: NullableStringFieldUpdateOperationsInput | string | null

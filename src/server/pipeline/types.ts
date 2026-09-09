@@ -13,9 +13,15 @@ export interface AiExtraction {
   district: string | null;
   deposit: number | null;
   adminRent: number | null;
+  /** Koszt mediów (prąd/gaz/woda) w zł/mies. — dokładny lub przybliżony, jeśli podany. */
+  utilitiesCost: number | null;
+  /** Elementy wyposażenia/mebli dosłownie wymienione w opisie (dowód dla `furnished`). */
+  furnishings: string[];
   furnished: boolean | null;
   /** Czy to na pewno długoterminowy najem całego mieszkania (nie pokój/doba/sprzedaż). */
   isLongTermApartmentRental: boolean;
+  /** Czy to wynajem pokoju w mieszkaniu współdzielonym z innymi lokatorami. */
+  isRoomInSharedApartment: boolean;
   /** Krótkie (2-3 zdania) podsumowanie po polsku. */
   summary: string;
 }
@@ -52,6 +58,7 @@ export interface PipelineStats {
   scraped: number;
   deduped: number;
   filtered: number;
+  preScored: number;
   aiChecked: number;
   passed: number;
   rejected: number;
