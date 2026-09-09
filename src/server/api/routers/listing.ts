@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { getActiveProfileId } from "~/server/api/helpers/active-profile";
 
 export const listingRouter = createTRPCRouter({
   list: publicProcedure
@@ -14,15 +15,12 @@ export const listingRouter = createTRPCRouter({
         .default({}),
     )
     .query(async ({ ctx, input }) => {
-      const profile = await ctx.db.searchProfile.findFirst({
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-      if (!profile) return [];
+      const profileId = await getActiveProfileId(ctx.db);
+      if (!profileId) return [];
 
       return ctx.db.listing.findMany({
         where: {
-          profileId: profile.id,
+          profileId,
           ...(input.status !== "ALL" ? { status: input.status } : {}),
           ...(input.source !== "ALL" ? { source: input.source } : {}),
           ...(input.onlyFavorites ? { favorite: true } : {}),
@@ -32,16 +30,13 @@ export const listingRouter = createTRPCRouter({
       });
     }),
 
-  /** Agregacja powodów odrzuceń z ostatniego przebiegu (dla profilu). */
+  /** Agregacja powodów odrzuceń z ostatniego przebiegu (dla aktywnego profilu). */
   rejectedSummary: publicProcedure.query(async ({ ctx }) => {
-    const profile = await ctx.db.searchProfile.findFirst({
-      orderBy: { createdAt: "asc" },
-      select: { id: true },
-    });
-    if (!profile) return { total: 0, byReason: [] as { reason: string; count: number }[] };
+    const profileId = await getActiveProfileId(ctx.db);
+    if (!profileId) return { total: 0, byReason: [] as { reason: string; count: number }[] };
 
     const rejected = await ctx.db.listing.findMany({
-      where: { profileId: profile.id, status: "REJECTED" },
+      where: { profileId, status: "REJECTED" },
       select: { rejectReason: true },
     });
 

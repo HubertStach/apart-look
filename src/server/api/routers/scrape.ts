@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 import { runPipeline } from "~/server/pipeline";
+import { getActiveProfile, getActiveProfileId } from "~/server/api/helpers/active-profile";
 
 /** Uznajemy przebieg za "wiszący" po 30 min bez zakończenia. */
 const STALE_RUN_MS = 30 * 60 * 1000;
@@ -15,9 +16,7 @@ export const scrapeRouter = createTRPCRouter({
   start: publicProcedure
     .input(z.object({ useMock: z.boolean().default(false) }).default({}))
     .mutation(async ({ ctx, input }) => {
-      const profile = await ctx.db.searchProfile.findFirst({
-        orderBy: { createdAt: "asc" },
-      });
+      const profile = await getActiveProfile(ctx.db);
       if (!profile) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -34,7 +33,7 @@ export const scrapeRouter = createTRPCRouter({
         data: { status: "ERROR", error: "Przerwany (timeout/restart)", finishedAt: new Date() },
       });
 
-      // Blokada: tylko jeden aktywny przebieg naraz.
+      // Blokada: tylko jeden aktywny przebieg naraz dla tego profilu.
       const running = await ctx.db.scrapeRun.findFirst({
         where: { profileId: profile.id, status: "RUNNING" },
       });
@@ -59,16 +58,13 @@ export const scrapeRouter = createTRPCRouter({
   status: publicProcedure
     .input(z.object({ runId: z.string().optional() }).default({}))
     .query(async ({ ctx, input }) => {
-      const profile = await ctx.db.searchProfile.findFirst({
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-      if (!profile) return null;
+      const profileId = await getActiveProfileId(ctx.db);
+      if (!profileId) return null;
 
       const run = input.runId
         ? await ctx.db.scrapeRun.findUnique({ where: { id: input.runId } })
         : await ctx.db.scrapeRun.findFirst({
-            where: { profileId: profile.id },
+            where: { profileId },
             orderBy: { startedAt: "desc" },
           });
       if (!run) return null;
@@ -92,13 +88,10 @@ export const scrapeRouter = createTRPCRouter({
     }),
 
   history: publicProcedure.query(async ({ ctx }) => {
-    const profile = await ctx.db.searchProfile.findFirst({
-      orderBy: { createdAt: "asc" },
-      select: { id: true },
-    });
-    if (!profile) return [];
+    const profileId = await getActiveProfileId(ctx.db);
+    if (!profileId) return [];
     return ctx.db.scrapeRun.findMany({
-      where: { profileId: profile.id },
+      where: { profileId },
       orderBy: { startedAt: "desc" },
       take: 10,
     });

@@ -33,9 +33,9 @@ export function RangeInput({
         placeholder="min"
         value={min ?? ""}
         onChange={(e) => onMinChange(toNum(e.target.value))}
-        className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+        className="w-full rounded-md border border-linen bg-cream/60 px-2 py-1 text-sm text-cocoa placeholder:text-mocha/50 focus:border-clay focus:outline-none focus:ring-1 focus:ring-clay/40"
       />
-      <span className="text-slate-400">–</span>
+      <span className="text-mocha/60">–</span>
       <input
         type="number"
         inputMode="numeric"
@@ -43,9 +43,9 @@ export function RangeInput({
         placeholder="max"
         value={max ?? ""}
         onChange={(e) => onMaxChange(toNum(e.target.value))}
-        className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+        className="w-full rounded-md border border-linen bg-cream/60 px-2 py-1 text-sm text-cocoa placeholder:text-mocha/50 focus:border-clay focus:outline-none focus:ring-1 focus:ring-clay/40"
       />
-      {unit && <span className="text-xs whitespace-nowrap text-slate-400">{unit}</span>}
+      {unit && <span className="text-xs whitespace-nowrap text-mocha/70">{unit}</span>}
     </div>
   );
 }

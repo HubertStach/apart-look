@@ -9,4 +9,16 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Paleta „cozy" — beż, złamana biel, ecru, jasny brąz */
+  --color-cream: #f6efe3; /* tło aplikacji — złamana biel */
+  --color-panel: #fbf7ee; /* panele / karty — cieplejsza biel */
+  --color-ecru: #efe4cf; /* ecru — sekcje, pola */
+  --color-beige: #e4d5ba; /* beż */
+  --color-sand: #d8c3a0; /* jasny brąz (jaśniejszy) */
+  --color-clay: #b58e63; /* jasny brąz — akcent, przyciski */
+  --color-clay-dark: #9c744a; /* hover akcentu */
+  --color-cocoa: #5f4d39; /* ciemny brąz — tekst główny */
+  --color-mocha: #8b7355; /* przygaszony brąz — tekst pomocniczy */
+  --color-linen: #e0d3bc; /* obramowania */
 }

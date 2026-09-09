@@ -6,6 +6,8 @@ import { parseDistricts } from "~/server/api/schemas/profile";
 import { StarRating } from "./star-rating";
 import { RangeInput } from "./range-input";
 import { ScrapeControls } from "./scrape-controls";
+import { Collapsible } from "./collapsible";
+import { ProfileSwitcher } from "./profile-switcher";
 
 interface FormState {
   id?: string;
@@ -44,10 +46,21 @@ const EMPTY: FormState = {
   parkingWeight: 0,
 };
 
-export function ProfilePanel() {
+const inputClass =
+  "rounded-md border border-linen bg-cream/60 px-2 py-1 text-cocoa placeholder:text-mocha/50 focus:border-clay focus:outline-none focus:ring-1 focus:ring-clay/40";
+
+export function ProfilePanel({ onCollapse }: { onCollapse?: () => void }) {
   const utils = api.useUtils();
   const { data: profile, isLoading } = api.profile.get.useQuery();
   const [form, setForm] = useState<FormState | null>(null);
+
+  // Reset lokalnego formularza, gdy zmieni się aktywny profil (przełączenie).
+  // Wzorzec React: dostosowanie stanu podczas renderu na podstawie zmiany danych.
+  const [lastProfileId, setLastProfileId] = useState<string | null>(profile?.id ?? null);
+  if ((profile?.id ?? null) !== lastProfileId) {
+    setLastProfileId(profile?.id ?? null);
+    setForm(null);
+  }
 
   // inicjalizacja formularza po pobraniu profilu
   const state: FormState =
@@ -107,51 +120,68 @@ export function ProfilePanel() {
   };
 
   if (isLoading) {
-    return <aside className="w-80 shrink-0 border-r border-slate-200 p-4">Ładowanie…</aside>;
+    return (
+      <aside className="w-80 shrink-0 border-r border-linen bg-panel p-4 text-mocha">
+        Ładowanie…
+      </aside>
+    );
   }
 
   const err = upsert.error?.data?.zodError?.fieldErrors;
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white">
-      <div className="border-b border-slate-200 p-4">
-        <h1 className="text-lg font-bold">🏠 apart-look</h1>
-        <p className="text-xs text-slate-500">Profil wyszukiwania</p>
+    <aside className="flex w-80 shrink-0 flex-col overflow-y-auto border-r border-linen bg-panel">
+      <div className="flex items-start justify-between border-b border-linen bg-beige/40 p-4">
+        <div>
+          <h1 className="text-lg font-bold text-cocoa">🏠 apart-look</h1>
+          <p className="text-xs text-mocha">Profil wyszukiwania</p>
+        </div>
+        {onCollapse && (
+          <button
+            onClick={onCollapse}
+            aria-label="Ukryj panel profilu"
+            title="Ukryj panel"
+            className="rounded-md p-1.5 text-mocha transition-colors hover:bg-ecru"
+          >
+            <span className="text-lg">⟨</span>
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-col gap-5 p-4">
-        {/* MUST-HAVE */}
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
-            Wymagane
-          </h2>
+      {/* PRZEŁĄCZNIK PROFILI */}
+      <div className="border-b border-linen p-3">
+        <ProfileSwitcher />
+      </div>
 
+      <div className="flex flex-col gap-3 p-3">
+        {/* MUST-HAVE */}
+        <Collapsible title="Wymagane" defaultOpen>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Nazwa profilu</span>
+            <span className="font-medium text-cocoa">Nazwa profilu</span>
             <input
               value={state.name}
               onChange={(e) => set("name", e.target.value)}
-              className="rounded border border-slate-300 px-2 py-1"
+              className={inputClass}
             />
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Miasto *</span>
+            <span className="font-medium text-cocoa">Miasto *</span>
             <input
               value={state.city}
               onChange={(e) => set("city", e.target.value)}
               placeholder="np. Kraków"
-              className="rounded border border-slate-300 px-2 py-1"
+              className={inputClass}
             />
             {err?.city && <span className="text-xs text-red-500">{err.city[0]}</span>}
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Liczba pokoi *</span>
+            <span className="font-medium text-cocoa">Liczba pokoi *</span>
             <select
               value={state.rooms}
               onChange={(e) => set("rooms", Number(e.target.value))}
-              className="rounded border border-slate-300 px-2 py-1"
+              className={inputClass}
             >
               {[1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>
@@ -160,17 +190,13 @@ export function ProfilePanel() {
               ))}
             </select>
           </label>
-        </section>
+        </Collapsible>
 
         {/* PREFERENCJE */}
-        <section className="flex flex-col gap-4">
-          <h2 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
-            Preferencje (waga = gwiazdki)
-          </h2>
-
+        <Collapsible title="Preferencje (waga = gwiazdki)" defaultOpen>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Cena (zł/mies)</span>
+              <span className="text-sm font-medium text-cocoa">Cena (zł/mies)</span>
               <StarRating
                 label="cena"
                 value={state.priceWeight}
@@ -189,7 +215,7 @@ export function ProfilePanel() {
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Powierzchnia</span>
+              <span className="text-sm font-medium text-cocoa">Powierzchnia</span>
               <StarRating
                 label="powierzchnia"
                 value={state.areaWeight}
@@ -207,7 +233,7 @@ export function ProfilePanel() {
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Dzielnice</span>
+              <span className="text-sm font-medium text-cocoa">Dzielnice</span>
               <StarRating
                 label="dzielnica"
                 value={state.districtWeight}
@@ -218,17 +244,18 @@ export function ProfilePanel() {
               value={state.districtsText}
               onChange={(e) => set("districtsText", e.target.value)}
               placeholder="np. Centrum, Podgórze"
-              className="rounded border border-slate-300 px-2 py-1 text-sm"
+              className={`${inputClass} text-sm`}
             />
-            <span className="text-xs text-slate-400">oddziel przecinkami</span>
+            <span className="text-xs text-mocha/70">oddziel przecinkami</span>
           </div>
 
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm font-medium">
+            <label className="flex items-center gap-2 text-sm font-medium text-cocoa">
               <input
                 type="checkbox"
                 checked={state.petsRequired}
                 onChange={(e) => set("petsRequired", e.target.checked)}
+                className="accent-clay"
               />
               Zwierzęta dozwolone
             </label>
@@ -240,11 +267,12 @@ export function ProfilePanel() {
           </div>
 
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm font-medium">
+            <label className="flex items-center gap-2 text-sm font-medium text-cocoa">
               <input
                 type="checkbox"
                 checked={state.parkingRequired}
                 onChange={(e) => set("parkingRequired", e.target.checked)}
+                className="accent-clay"
               />
               Miejsce parkingowe
             </label>
@@ -254,24 +282,24 @@ export function ProfilePanel() {
               onChange={(v) => set("parkingWeight", v)}
             />
           </div>
-        </section>
+        </Collapsible>
 
         <button
           onClick={save}
           disabled={upsert.isPending || !state.city}
-          className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-40"
+          className="rounded-md bg-clay px-3 py-2 text-sm font-medium text-cream shadow-sm transition-colors hover:bg-clay-dark disabled:opacity-40"
         >
           {upsert.isPending ? "Zapisywanie…" : "💾 Zapisz profil"}
         </button>
         {upsert.isSuccess && (
-          <span className="text-center text-xs text-green-600">Zapisano ✓</span>
+          <span className="text-center text-xs text-green-700">Zapisano ✓</span>
         )}
       </div>
 
-      {/* KONTROLKI SCRAPOWANIA */}
+      {/* KONTROLKI SCRAPOWANIA — key=id resetuje stan przy zmianie profilu */}
       {profile && (
-        <div className="mt-auto border-t border-slate-200 p-4">
-          <ScrapeControls hasProfile={!!profile} />
+        <div className="mt-auto border-t border-linen bg-beige/30 p-4">
+          <ScrapeControls key={profile.id} hasProfile={!!profile} />
         </div>
       )}
     </aside>

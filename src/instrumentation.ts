@@ -20,14 +20,13 @@ export async function register() {
 
   const { db } = await import("~/server/db");
   const { runPipeline } = await import("~/server/pipeline");
+  const { getActiveProfile } = await import("~/server/api/helpers/active-profile");
 
   console.log(`[cron] Harmonogram scrapowania: "${cronExpr}"`);
 
   cron.schedule(cronExpr, () => {
     void (async () => {
-      const profile = await db.searchProfile.findFirst({
-        orderBy: { createdAt: "asc" },
-      });
+      const profile = await getActiveProfile(db);
       if (!profile) return;
 
       // pomiń, jeśli przebieg już trwa

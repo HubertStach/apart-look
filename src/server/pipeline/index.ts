@@ -109,5 +109,9 @@ export async function runPipeline(
         finishedAt: new Date(),
       },
     });
+  } finally {
+    // Zamknij headless przeglądarkę (jeśli była użyta) — oszczędzamy RAM.
+    const { closeBrowser } = await import("../scrapers/browser-fetch");
+    await closeBrowser();
   }
 }

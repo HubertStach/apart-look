@@ -12,8 +12,9 @@ datasource db {
 }
 
 model SearchProfile {
-    id   String @id @default(cuid())
-    name String
+    id       String  @id @default(cuid())
+    name     String
+    isActive Boolean @default(false) // jeden aktywny profil naraz
 
     // MUST-HAVE (twarde filtry)
     city  String

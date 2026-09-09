@@ -58,7 +58,7 @@ export function ScrapeControls({ hasProfile }: { hasProfile: boolean }) {
       <button
         onClick={() => start.mutate({ useMock: false })}
         disabled={isRunning || start.isPending}
-        className="rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-40"
+        className="rounded-md bg-clay px-3 py-2 text-sm font-semibold text-cream shadow-sm transition-colors hover:bg-clay-dark disabled:opacity-40"
       >
         {isRunning ? "⏳ Szukanie…" : "🔍 Szukaj mieszkań"}
       </button>
@@ -66,7 +66,7 @@ export function ScrapeControls({ hasProfile }: { hasProfile: boolean }) {
       <button
         onClick={() => start.mutate({ useMock: true })}
         disabled={isRunning || start.isPending}
-        className="rounded border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+        className="rounded-md border border-linen bg-panel px-3 py-1.5 text-xs text-mocha transition-colors hover:bg-ecru disabled:opacity-40"
         title="Uruchom na danych zastępczych (gdy portale blokują scrapowanie z serwera)"
       >
         Tryb demo (dane mock)
@@ -77,25 +77,25 @@ export function ScrapeControls({ hasProfile }: { hasProfile: boolean }) {
       )}
 
       {run && (
-        <div className="flex flex-col gap-1 rounded bg-slate-50 p-2 text-xs">
+        <div className="flex flex-col gap-1 rounded-md border border-linen bg-cream/70 p-2 text-xs">
           {isRunning && (
             <>
               <div className="flex justify-between">
-                <span className="font-medium">{run.currentStep ?? "…"}</span>
-                <span className="text-slate-400">
+                <span className="font-medium text-cocoa">{run.currentStep ?? "…"}</span>
+                <span className="text-mocha/70">
                   {run.stats.aiChecked ? `AI: ${run.stats.aiChecked}` : ""}
                 </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded bg-slate-200">
+              <div className="h-1.5 overflow-hidden rounded-full bg-beige">
                 <div
-                  className="h-full bg-blue-500 transition-all"
+                  className="h-full bg-clay transition-all"
                   style={{ width: `${progress}%` }}
                 />
               </div>
             </>
           )}
           {run.status === "DONE" && (
-            <span className="text-green-600">
+            <span className="text-green-700">
               ✓ Znaleziono {run.stats.passed ?? 0}, odrzucono {run.stats.rejected ?? 0}
             </span>
           )}

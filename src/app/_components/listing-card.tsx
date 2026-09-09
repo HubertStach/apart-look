@@ -6,17 +6,17 @@ import type { RouterOutputs } from "~/trpc/react";
 type Listing = RouterOutputs["listing"]["list"][number];
 
 function scoreColor(score: number): string {
-  if (score >= 0.75) return "bg-green-500";
-  if (score >= 0.5) return "bg-amber-500";
-  return "bg-slate-400";
+  if (score >= 0.75) return "bg-green-600";
+  if (score >= 0.5) return "bg-clay";
+  return "bg-sand";
 }
 
-function Badge({ children, tone = "slate" }: { children: React.ReactNode; tone?: string }) {
+function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: string }) {
   const tones: Record<string, string> = {
-    slate: "bg-slate-100 text-slate-700",
-    green: "bg-green-100 text-green-700",
+    neutral: "bg-ecru text-cocoa",
+    green: "bg-green-100 text-green-800",
     red: "bg-red-100 text-red-700",
-    blue: "bg-blue-100 text-blue-700",
+    clay: "bg-beige text-cocoa",
   };
   return (
     <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${tones[tone]}`}>
@@ -37,31 +37,31 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const scorePct = Math.round(score * 100);
 
   return (
-    <article className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <article className="flex gap-3 rounded-lg border border-linen bg-panel p-3 shadow-sm transition-shadow hover:shadow-md">
       {listing.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={listing.imageUrl}
           alt=""
-          className="h-28 w-36 shrink-0 rounded object-cover"
+          className="h-28 w-36 shrink-0 rounded-md object-cover"
         />
       ) : (
-        <div className="flex h-28 w-36 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-300">
+        <div className="flex h-28 w-36 shrink-0 items-center justify-center rounded-md bg-ecru text-mocha/50">
           brak zdjęcia
         </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate text-sm font-semibold">{listing.title}</h3>
+          <h3 className="truncate text-sm font-semibold text-cocoa">{listing.title}</h3>
           <div className="flex shrink-0 items-center gap-1">
-            <div className="h-2 w-16 overflow-hidden rounded bg-slate-200">
+            <div className="h-2 w-16 overflow-hidden rounded-full bg-beige">
               <div
                 className={`h-full ${scoreColor(score)}`}
                 style={{ width: `${scorePct}%` }}
               />
             </div>
-            <span className="w-8 text-right text-xs font-bold text-slate-600">
+            <span className="w-8 text-right text-xs font-bold text-mocha">
               {scorePct}%
             </span>
           </div>
@@ -69,17 +69,17 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
           {listing.price != null && (
-            <span className="text-base font-bold text-slate-900">
+            <span className="text-base font-bold text-cocoa">
               {listing.price.toLocaleString("pl-PL")} zł
             </span>
           )}
-          {listing.area != null && <span className="text-slate-600">{listing.area} m²</span>}
-          {listing.rooms != null && <span className="text-slate-600">{listing.rooms} pok.</span>}
-          {listing.district && <span className="text-slate-500">📍 {listing.district}</span>}
+          {listing.area != null && <span className="text-mocha">{listing.area} m²</span>}
+          {listing.rooms != null && <span className="text-mocha">{listing.rooms} pok.</span>}
+          {listing.district && <span className="text-mocha/80">📍 {listing.district}</span>}
         </div>
 
         <div className="flex flex-wrap gap-1">
-          <Badge tone="blue">{listing.source}</Badge>
+          <Badge tone="clay">{listing.source}</Badge>
           {listing.petsAllowed === true && <Badge tone="green">🐾 zwierzęta OK</Badge>}
           {listing.petsAllowed === false && <Badge tone="red">🐾 bez zwierząt</Badge>}
           {listing.hasParking === true && <Badge tone="green">🅿️ parking</Badge>}
@@ -87,7 +87,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         </div>
 
         {listing.aiSummary && (
-          <p className="line-clamp-2 text-xs text-slate-500">{listing.aiSummary}</p>
+          <p className="line-clamp-2 text-xs text-mocha/80">{listing.aiSummary}</p>
         )}
 
         <div className="mt-auto flex items-center gap-3 pt-1 text-xs">
@@ -95,19 +95,19 @@ export function ListingCard({ listing }: { listing: Listing }) {
             href={listing.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-blue-600 hover:underline"
+            className="font-medium text-clay hover:text-clay-dark hover:underline"
           >
             Zobacz ogłoszenie ↗
           </a>
           <button
             onClick={() => favorite.mutate({ id: listing.id, favorite: !listing.favorite })}
-            className={listing.favorite ? "text-amber-500" : "text-slate-400 hover:text-amber-400"}
+            className={listing.favorite ? "text-amber-500" : "text-mocha/60 hover:text-amber-400"}
           >
             {listing.favorite ? "★ ulubione" : "☆ ulubione"}
           </button>
           <button
             onClick={() => hide.mutate({ id: listing.id, hidden: !listing.hidden })}
-            className="text-slate-400 hover:text-red-500"
+            className="text-mocha/60 hover:text-red-500"
           >
             {listing.hidden ? "przywróć" : "ukryj"}
           </button>

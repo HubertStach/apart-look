@@ -7,6 +7,7 @@ function makeProfile(overrides: Partial<SearchProfile> = {}): SearchProfile {
   return {
     id: "p1",
     name: "test",
+    isActive: true,
     city: "Kraków",
     rooms: 2,
     priceMin: null,

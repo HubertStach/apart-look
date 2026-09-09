@@ -121,6 +121,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.SearchProfileScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  isActive: 'isActive',
   city: 'city',
   rooms: 'rooms',
   priceMin: 'priceMin',

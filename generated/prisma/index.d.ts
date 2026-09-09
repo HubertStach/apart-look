@@ -1123,6 +1123,7 @@ export namespace Prisma {
   export type SearchProfileMinAggregateOutputType = {
     id: string | null
     name: string | null
+    isActive: boolean | null
     city: string | null
     rooms: number | null
     priceMin: number | null
@@ -1144,6 +1145,7 @@ export namespace Prisma {
   export type SearchProfileMaxAggregateOutputType = {
     id: string | null
     name: string | null
+    isActive: boolean | null
     city: string | null
     rooms: number | null
     priceMin: number | null
@@ -1165,6 +1167,7 @@ export namespace Prisma {
   export type SearchProfileCountAggregateOutputType = {
     id: number
     name: number
+    isActive: number
     city: number
     rooms: number
     priceMin: number
@@ -1214,6 +1217,7 @@ export namespace Prisma {
   export type SearchProfileMinAggregateInputType = {
     id?: true
     name?: true
+    isActive?: true
     city?: true
     rooms?: true
     priceMin?: true
@@ -1235,6 +1239,7 @@ export namespace Prisma {
   export type SearchProfileMaxAggregateInputType = {
     id?: true
     name?: true
+    isActive?: true
     city?: true
     rooms?: true
     priceMin?: true
@@ -1256,6 +1261,7 @@ export namespace Prisma {
   export type SearchProfileCountAggregateInputType = {
     id?: true
     name?: true
+    isActive?: true
     city?: true
     rooms?: true
     priceMin?: true
@@ -1364,6 +1370,7 @@ export namespace Prisma {
   export type SearchProfileGroupByOutputType = {
     id: string
     name: string
+    isActive: boolean
     city: string
     rooms: number
     priceMin: number | null
@@ -1404,6 +1411,7 @@ export namespace Prisma {
   export type SearchProfileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    isActive?: boolean
     city?: boolean
     rooms?: boolean
     priceMin?: boolean
@@ -1428,6 +1436,7 @@ export namespace Prisma {
   export type SearchProfileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    isActive?: boolean
     city?: boolean
     rooms?: boolean
     priceMin?: boolean
@@ -1449,6 +1458,7 @@ export namespace Prisma {
   export type SearchProfileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    isActive?: boolean
     city?: boolean
     rooms?: boolean
     priceMin?: boolean
@@ -1470,6 +1480,7 @@ export namespace Prisma {
   export type SearchProfileSelectScalar = {
     id?: boolean
     name?: boolean
+    isActive?: boolean
     city?: boolean
     rooms?: boolean
     priceMin?: boolean
@@ -1488,7 +1499,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type SearchProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "city" | "rooms" | "priceMin" | "priceMax" | "priceWeight" | "areaMin" | "areaMax" | "areaWeight" | "districts" | "districtWeight" | "petsRequired" | "petsWeight" | "parkingRequired" | "parkingWeight" | "createdAt" | "updatedAt", ExtArgs["result"]["searchProfile"]>
+  export type SearchProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "isActive" | "city" | "rooms" | "priceMin" | "priceMax" | "priceWeight" | "areaMin" | "areaMax" | "areaWeight" | "districts" | "districtWeight" | "petsRequired" | "petsWeight" | "parkingRequired" | "parkingWeight" | "createdAt" | "updatedAt", ExtArgs["result"]["searchProfile"]>
   export type SearchProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     listings?: boolean | SearchProfile$listingsArgs<ExtArgs>
     runs?: boolean | SearchProfile$runsArgs<ExtArgs>
@@ -1506,6 +1517,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
+      isActive: boolean
       city: string
       rooms: number
       priceMin: number | null
@@ -1949,6 +1961,7 @@ export namespace Prisma {
   interface SearchProfileFieldRefs {
     readonly id: FieldRef<"SearchProfile", 'String'>
     readonly name: FieldRef<"SearchProfile", 'String'>
+    readonly isActive: FieldRef<"SearchProfile", 'Boolean'>
     readonly city: FieldRef<"SearchProfile", 'String'>
     readonly rooms: FieldRef<"SearchProfile", 'Int'>
     readonly priceMin: FieldRef<"SearchProfile", 'Int'>
@@ -4879,6 +4892,7 @@ export namespace Prisma {
   export const SearchProfileScalarFieldEnum: {
     id: 'id',
     name: 'name',
+    isActive: 'isActive',
     city: 'city',
     rooms: 'rooms',
     priceMin: 'priceMin',
@@ -4973,16 +4987,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Int'
+   * Reference to a field of type 'Boolean'
    */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
   /**
-   * Reference to a field of type 'Boolean'
+   * Reference to a field of type 'Int'
    */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
 
 
@@ -5009,6 +5023,7 @@ export namespace Prisma {
     NOT?: SearchProfileWhereInput | SearchProfileWhereInput[]
     id?: StringFilter<"SearchProfile"> | string
     name?: StringFilter<"SearchProfile"> | string
+    isActive?: BoolFilter<"SearchProfile"> | boolean
     city?: StringFilter<"SearchProfile"> | string
     rooms?: IntFilter<"SearchProfile"> | number
     priceMin?: IntNullableFilter<"SearchProfile"> | number | null
@@ -5032,6 +5047,7 @@ export namespace Prisma {
   export type SearchProfileOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
+    isActive?: SortOrder
     city?: SortOrder
     rooms?: SortOrder
     priceMin?: SortOrderInput | SortOrder
@@ -5058,6 +5074,7 @@ export namespace Prisma {
     OR?: SearchProfileWhereInput[]
     NOT?: SearchProfileWhereInput | SearchProfileWhereInput[]
     name?: StringFilter<"SearchProfile"> | string
+    isActive?: BoolFilter<"SearchProfile"> | boolean
     city?: StringFilter<"SearchProfile"> | string
     rooms?: IntFilter<"SearchProfile"> | number
     priceMin?: IntNullableFilter<"SearchProfile"> | number | null
@@ -5081,6 +5098,7 @@ export namespace Prisma {
   export type SearchProfileOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
+    isActive?: SortOrder
     city?: SortOrder
     rooms?: SortOrder
     priceMin?: SortOrderInput | SortOrder
@@ -5110,6 +5128,7 @@ export namespace Prisma {
     NOT?: SearchProfileScalarWhereWithAggregatesInput | SearchProfileScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"SearchProfile"> | string
     name?: StringWithAggregatesFilter<"SearchProfile"> | string
+    isActive?: BoolWithAggregatesFilter<"SearchProfile"> | boolean
     city?: StringWithAggregatesFilter<"SearchProfile"> | string
     rooms?: IntWithAggregatesFilter<"SearchProfile"> | number
     priceMin?: IntNullableWithAggregatesFilter<"SearchProfile"> | number | null
@@ -5354,6 +5373,7 @@ export namespace Prisma {
   export type SearchProfileCreateInput = {
     id?: string
     name: string
+    isActive?: boolean
     city: string
     rooms: number
     priceMin?: number | null
@@ -5377,6 +5397,7 @@ export namespace Prisma {
   export type SearchProfileUncheckedCreateInput = {
     id?: string
     name: string
+    isActive?: boolean
     city: string
     rooms: number
     priceMin?: number | null
@@ -5400,6 +5421,7 @@ export namespace Prisma {
   export type SearchProfileUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     city?: StringFieldUpdateOperationsInput | string
     rooms?: IntFieldUpdateOperationsInput | number
     priceMin?: NullableIntFieldUpdateOperationsInput | number | null
@@ -5423,6 +5445,7 @@ export namespace Prisma {
   export type SearchProfileUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     city?: StringFieldUpdateOperationsInput | string
     rooms?: IntFieldUpdateOperationsInput | number
     priceMin?: NullableIntFieldUpdateOperationsInput | number | null
@@ -5446,6 +5469,7 @@ export namespace Prisma {
   export type SearchProfileCreateManyInput = {
     id?: string
     name: string
+    isActive?: boolean
     city: string
     rooms: number
     priceMin?: number | null
@@ -5467,6 +5491,7 @@ export namespace Prisma {
   export type SearchProfileUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     city?: StringFieldUpdateOperationsInput | string
     rooms?: IntFieldUpdateOperationsInput | number
     priceMin?: NullableIntFieldUpdateOperationsInput | number | null
@@ -5488,6 +5513,7 @@ export namespace Prisma {
   export type SearchProfileUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     city?: StringFieldUpdateOperationsInput | string
     rooms?: IntFieldUpdateOperationsInput | number
     priceMin?: NullableIntFieldUpdateOperationsInput | number | null
@@ -5784,6 +5810,11 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type IntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[]
@@ -5804,11 +5835,6 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type DateTimeFilter<$PrismaModel = never> = {
@@ -5850,6 +5876,7 @@ export namespace Prisma {
   export type SearchProfileCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    isActive?: SortOrder
     city?: SortOrder
     rooms?: SortOrder
     priceMin?: SortOrder
@@ -5884,6 +5911,7 @@ export namespace Prisma {
   export type SearchProfileMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    isActive?: SortOrder
     city?: SortOrder
     rooms?: SortOrder
     priceMin?: SortOrder
@@ -5905,6 +5933,7 @@ export namespace Prisma {
   export type SearchProfileMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    isActive?: SortOrder
     city?: SortOrder
     rooms?: SortOrder
     priceMin?: SortOrder
@@ -5953,6 +5982,14 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[]
@@ -5983,14 +6020,6 @@ export namespace Prisma {
     _sum?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedIntNullableFilter<$PrismaModel>
     _max?: NestedIntNullableFilter<$PrismaModel>
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -6276,6 +6305,10 @@ export namespace Prisma {
     set?: string
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -6290,10 +6323,6 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -6418,6 +6447,11 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedIntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[]
@@ -6438,11 +6472,6 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -6471,6 +6500,14 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -6525,14 +6562,6 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -6803,6 +6832,7 @@ export namespace Prisma {
   export type SearchProfileCreateWithoutListingsInput = {
     id?: string
     name: string
+    isActive?: boolean
     city: string
     rooms: number
     priceMin?: number | null
@@ -6825,6 +6855,7 @@ export namespace Prisma {
   export type SearchProfileUncheckedCreateWithoutListingsInput = {
     id?: string
     name: string
+    isActive?: boolean
     city: string
     rooms: number
     priceMin?: number | null
@@ -6863,6 +6894,7 @@ export namespace Prisma {
   export type SearchProfileUpdateWithoutListingsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     city?: StringFieldUpdateOperationsInput | string
     rooms?: IntFieldUpdateOperationsInput | number
     priceMin?: NullableIntFieldUpdateOperationsInput | number | null
@@ -6885,6 +6917,7 @@ export namespace Prisma {
   export type SearchProfileUncheckedUpdateWithoutListingsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     city?: StringFieldUpdateOperationsInput | string
     rooms?: IntFieldUpdateOperationsInput | number
     priceMin?: NullableIntFieldUpdateOperationsInput | number | null
@@ -6907,6 +6940,7 @@ export namespace Prisma {
   export type SearchProfileCreateWithoutRunsInput = {
     id?: string
     name: string
+    isActive?: boolean
     city: string
     rooms: number
     priceMin?: number | null
@@ -6929,6 +6963,7 @@ export namespace Prisma {
   export type SearchProfileUncheckedCreateWithoutRunsInput = {
     id?: string
     name: string
+    isActive?: boolean
     city: string
     rooms: number
     priceMin?: number | null
@@ -6967,6 +7002,7 @@ export namespace Prisma {
   export type SearchProfileUpdateWithoutRunsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     city?: StringFieldUpdateOperationsInput | string
     rooms?: IntFieldUpdateOperationsInput | number
     priceMin?: NullableIntFieldUpdateOperationsInput | number | null
@@ -6989,6 +7025,7 @@ export namespace Prisma {
   export type SearchProfileUncheckedUpdateWithoutRunsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     city?: StringFieldUpdateOperationsInput | string
     rooms?: IntFieldUpdateOperationsInput | number
     priceMin?: NullableIntFieldUpdateOperationsInput | number | null

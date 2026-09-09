@@ -13,11 +13,13 @@ export const env = createEnv({
       .default("development"),
     // Ollama (lokalny model AI)
     OLLAMA_URL: z.string().url().default("http://localhost:11434"),
-    OLLAMA_MODEL: z.string().default("qwen2.5:7b-instruct"),
+    OLLAMA_MODEL: z.string().default("gemma4:e2b"),
     // Harmonogram scrapowania (cron); pusty = wyłączony
     SCRAPE_CRON: z.string().optional(),
     // Limit stron pobieranych z każdego portalu na jeden przebieg
     SCRAPE_MAX_PAGES: z.coerce.number().int().positive().default(3),
+    // Silnik pobierania: auto (http z fallbackiem na przeglądarkę) / http / browser
+    SCRAPE_ENGINE: z.enum(["auto", "http", "browser"]).default("auto"),
   },
 
   /**
@@ -40,6 +42,7 @@ export const env = createEnv({
     OLLAMA_MODEL: process.env.OLLAMA_MODEL,
     SCRAPE_CRON: process.env.SCRAPE_CRON,
     SCRAPE_MAX_PAGES: process.env.SCRAPE_MAX_PAGES,
+    SCRAPE_ENGINE: process.env.SCRAPE_ENGINE,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

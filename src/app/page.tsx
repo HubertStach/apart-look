@@ -1,6 +1,5 @@
 import { HydrateClient, api } from "~/trpc/server";
-import { ProfilePanel } from "~/app/_components/profile-panel";
-import { ListingList } from "~/app/_components/listing-list";
+import { WorkspaceShell } from "~/app/_components/workspace-shell";
 
 // Aplikacja jest w pełni dynamiczna (dane z lokalnej bazy) — nie prerenderujemy
 // statycznie, bo to uruchamiałoby zapytania do bazy podczas `next build`.
@@ -12,10 +11,7 @@ export default async function Home() {
 
   return (
     <HydrateClient>
-      <div className="flex h-screen w-screen overflow-hidden">
-        <ProfilePanel />
-        <ListingList />
-      </div>
+      <WorkspaceShell />
     </HydrateClient>
   );
 }

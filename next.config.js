@@ -15,7 +15,7 @@ const config = {
   outputFileTracingRoot: projectRoot,
   // Prisma jako pakiet zewnętrzny serwera — nie jest bundlowana (jej detekcja
   // silnika/platformy skanuje katalog domowy).
-  serverExternalPackages: ["@prisma/client", "prisma", "@prisma/engines"],
+  serverExternalPackages: ["@prisma/client", "prisma", "@prisma/engines", "playwright"],
 };
 
 export default config;

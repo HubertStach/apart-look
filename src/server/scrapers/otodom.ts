@@ -1,4 +1,4 @@
-import { politeFetch } from "./polite-fetch";
+import { smartFetchHtml, ScraperError } from "./smart-fetch";
 import { extractNextData, mapOtodomHtml } from "./otodom-map";
 import { normalizeText } from "../pipeline/text";
 import type { ScrapedListing } from "../pipeline/types";
@@ -22,9 +22,41 @@ const ROOMS_ENUM: Record<number, string> = {
   5: "FIVE",
 };
 
+/**
+ * Pełne slugi lokalizacji Otodom (wojewodztwo/powiat/gmina/miasto) —
+ * wszystkie zweryfikowane na żywych URL-ach (2026-09). Krótkie slugi
+ * typu /mieszkanie/krakow zwracają 404.
+ */
+const CITY_SLUGS: Record<string, string> = {
+  krakow: "malopolskie/krakow/krakow/krakow",
+  warszawa: "mazowieckie/warszawa/warszawa/warszawa",
+  wroclaw: "dolnoslaskie/wroclaw/wroclaw/wroclaw",
+  poznan: "wielkopolskie/poznan/poznan/poznan",
+  gdansk: "pomorskie/gdansk/gdansk/gdansk",
+  lodz: "lodzkie/lodz/lodz/lodz",
+  katowice: "slaskie/katowice/katowice/katowice",
+  lublin: "lubelskie/lublin/lublin/lublin",
+  szczecin: "zachodniopomorskie/szczecin/szczecin/szczecin",
+  bydgoszcz: "kujawsko--pomorskie/bydgoszcz/bydgoszcz/bydgoszcz",
+  torun: "kujawsko--pomorskie/torun/torun/torun",
+  rzeszow: "podkarpackie/rzeszow/rzeszow/rzeszow",
+  bialystok: "podlaskie/bialystok/bialystok/bialystok",
+  gdynia: "pomorskie/gdynia/gdynia/gdynia",
+  olsztyn: "warminsko--mazurskie/olsztyn/olsztyn/olsztyn",
+  kielce: "swietokrzyskie/kielce/kielce/kielce",
+};
+
 /** Slug miasta w URL Otodom: małe litery, bez diakrytyków, spacje→myślniki. */
 function citySlug(city: string): string {
-  return normalizeText(city).replace(/\s+/g, "-");
+  const key = normalizeText(city).replace(/\s+/g, "-");
+  const full = CITY_SLUGS[key];
+  if (!full) {
+    throw new ScraperError(
+      `Otodom: nieznany slug lokalizacji dla "${city}" — dodaj miasto do CITY_SLUGS w otodom.ts`,
+      "OTODOM",
+    );
+  }
+  return full;
 }
 
 function buildUrl(params: OtodomSearchParams, page: number): string {
@@ -36,7 +68,8 @@ function buildUrl(params: OtodomSearchParams, page: number): string {
   if (params.areaMin != null) u.searchParams.set("areaMin", String(params.areaMin));
   if (params.areaMax != null) u.searchParams.set("areaMax", String(params.areaMax));
   if (params.rooms && ROOMS_ENUM[params.rooms]) {
-    u.searchParams.set("roomsNumber", `%5B${ROOMS_ENUM[params.rooms]}%5D`);
+    // searchParams.set sam enkoduje — podajemy surowe [ONE], nie %5BONE%5D
+    u.searchParams.set("roomsNumber", `[${ROOMS_ENUM[params.rooms]}]`);
   }
   u.searchParams.set("limit", "36");
   if (page > 1) u.searchParams.set("page", String(page));
@@ -55,13 +88,7 @@ export async function searchOtodom(params: OtodomSearchParams): Promise<ScrapedL
 
   for (let page = 1; page <= maxPages; page++) {
     const url = buildUrl(params, page);
-    const html = await politeFetch(url, {
-      source: "OTODOM",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        Referer: "https://www.otodom.pl/",
-      },
-    });
+    const html = await smartFetchHtml(url, { source: "OTODOM" });
 
     const mapped = mapOtodomHtml(html);
     results.push(...mapped);
@@ -77,7 +104,7 @@ export async function searchOtodom(params: OtodomSearchParams): Promise<ScrapedL
 
 /** Dociąga pełny opis pojedynczego ogłoszenia (strona szczegółów). */
 export async function fetchOtodomDetails(url: string): Promise<string | undefined> {
-  const html = await politeFetch(url, { source: "OTODOM" });
+  const html = await smartFetchHtml(url, { source: "OTODOM" });
   const nextData = extractNextData(html);
   const desc = digDescription(nextData);
   if (desc) return desc;

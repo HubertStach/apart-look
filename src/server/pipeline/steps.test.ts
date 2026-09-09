@@ -10,6 +10,7 @@ function ctx(profile: Partial<SearchProfile>): PipelineContext {
     profile: {
       id: "p1",
       name: "t",
+      isActive: true,
       city: "Kraków",
       rooms: 2,
       priceMin: null,

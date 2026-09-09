@@ -1,29 +1,60 @@
 import * as cheerio from "cheerio";
 import type { ScrapedListing } from "../pipeline/types";
-import { parseArea, parsePrice, parseRooms } from "../pipeline/text";
+import { parseArea, parsePrice } from "../pipeline/text";
 
 /**
- * Otodom to aplikacja Next.js — dane wyników siedzą w <script id="__NEXT_DATA__">.
- * Struktura bywa zmieniana; parsujemy defensywnie i przechodzimy przez znane ścieżki.
+ * Otodom to aplikacja Next.js — dane wyników siedzą w <script id="__NEXT_DATA__">
+ * pod ścieżką props.pageProps.data.searchAds.items (zweryfikowane 2026-09).
+ *
+ * Uwaga na semantykę cen (zweryfikowana na żywych danych):
+ *  - totalPrice = czynsz najmu (główna cena oferty),
+ *  - rentPrice  = czynsz administracyjny (dodatkowy!).
  */
 export interface OtodomAd {
   id?: number | string;
   slug?: string;
   title?: string;
+  estate?: string; // "FLAT"
+  transaction?: string; // "RENT"
   totalPrice?: { value?: number } | null;
   rentPrice?: { value?: number } | null;
   areaInSquareMeters?: number;
-  roomsNumber?: number | string;
+  roomsNumber?: number | string; // enum: "ONE" | "TWO" | ... lub liczba
+  shortDescription?: string;
   location?: {
     address?: {
       city?: { name?: string };
       district?: { name?: string };
     };
-    // niektóre warianty:
-    reverseGeocoding?: { locations?: { fullName?: string }[] };
+    reverseGeocoding?: {
+      locations?: { name?: string; locationLevel?: string; fullName?: string }[];
+    };
   };
   images?: { large?: string; medium?: string }[];
   description?: string;
+}
+
+/** Enum liczby pokoi Otodom → liczba. */
+const ROOMS_WORD: Record<string, number> = {
+  ONE: 1,
+  TWO: 2,
+  THREE: 3,
+  FOUR: 4,
+  FIVE: 5,
+  SIX: 6,
+  SEVEN: 7,
+  EIGHT: 8,
+  NINE: 9,
+  TEN: 10,
+};
+
+function parseOtodomRooms(value: number | string | undefined): number | undefined {
+  if (value == null) return undefined;
+  if (typeof value === "number") return value;
+  const mapped = ROOMS_WORD[value.toUpperCase()];
+  if (mapped) return mapped;
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : undefined;
 }
 
 /** Wyciąga JSON z __NEXT_DATA__ danego HTML. */
@@ -67,22 +98,27 @@ export function mapOtodomAd(ad: OtodomAd): ScrapedListing | null {
   const slug = ad.slug ?? String(ad.id);
   const url = `https://www.otodom.pl/pl/oferta/${slug}`;
 
-  const price = ad.rentPrice?.value ?? ad.totalPrice?.value;
+  const geo = ad.location?.reverseGeocoding?.locations ?? [];
   const city =
     ad.location?.address?.city?.name ??
-    ad.location?.reverseGeocoding?.locations?.at(-1)?.fullName;
+    geo.find((l) => l.locationLevel === "city_or_village")?.name;
+  const district =
+    ad.location?.address?.district?.name ??
+    geo.find((l) => l.locationLevel === "district")?.name;
 
   return {
     source: "OTODOM",
     externalId: String(ad.id),
     url,
     title: ad.title ?? "(bez tytułu)",
-    description: ad.description,
-    price: parsePrice(price ?? null),
+    description: ad.description ?? ad.shortDescription,
+    // totalPrice = czynsz najmu; rentPrice = czynsz administracyjny (dodatek)
+    price: parsePrice(ad.totalPrice?.value ?? null),
+    rentExtra: parsePrice(ad.rentPrice?.value ?? null),
     area: parseArea(ad.areaInSquareMeters ?? null),
-    rooms: parseRooms(ad.roomsNumber ?? ad.title ?? null),
+    rooms: parseOtodomRooms(ad.roomsNumber),
     city,
-    district: ad.location?.address?.district?.name,
+    district,
     imageUrl: ad.images?.[0]?.large ?? ad.images?.[0]?.medium,
   };
 }
