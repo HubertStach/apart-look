@@ -1,0 +1,12 @@
+@import "tailwindcss" source(none);
+
+/* Jawnie wskazujemy katalogi ze źródłami klas Tailwind (zamiast automatycznego
+   wykrywania). Trzyma skanowanie w obrębie projektu — istotne na Windows, gdzie
+   skan w górę drzewa trafia na chronione złącza w katalogu domowym. */
+@source "../app";
+@source "../server";
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}

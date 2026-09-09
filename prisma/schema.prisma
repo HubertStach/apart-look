@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+model SearchProfile {
+    id   String @id @default(cuid())
+    name String
+
+    // MUST-HAVE (twarde filtry)
+    city  String
+    rooms Int // dokładna liczba pokoi
+
+    // PREFERENCJE — wartość + waga 0..5 gwiazdek (0 = nieistotne)
+    priceMin        Int?
+    priceMax        Int?
+    priceWeight     Int     @default(0)
+    areaMin         Int?
+    areaMax         Int?
+    areaWeight      Int     @default(0)
+    districts       String  @default("[]") // JSON string[] — preferowane dzielnice
+    districtWeight  Int     @default(0)
+    petsRequired    Boolean @default(false)
+    petsWeight      Int     @default(0)
+    parkingRequired Boolean @default(false)
+    parkingWeight   Int     @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    listings Listing[]
+    runs     ScrapeRun[]
+}
+
+model Listing {
+    id          String  @id @default(cuid())
+    source      String // "OLX" | "OTODOM"
+    externalId  String
+    url         String
+    title       String
+    description String?
+    price       Int? // zł/mies (czynsz najmu)
+    rentExtra   Int? // czynsz administracyjny, jeśli AI go wyłuska
+    area        Float?
+    rooms       Int?
+    city        String?
+    district    String?
+    petsAllowed Boolean? // null = nieznane
+    hasParking  Boolean?
+    imageUrl    String?
+
+    // wynik pipeline'u
+    score        Float?
+    aiSummary    String? // 2-3 zdania podsumowania po polsku
+    aiExtracted  String? // JSON — surowy wynik ekstrakcji AI
+    status       String  @default("NEW") // NEW|PASSED|REJECTED
+    rejectReason String?
+    hidden       Boolean @default(false) // "odrzuć" w UI
+    favorite     Boolean @default(false)
+
+    scrapedAt DateTime @default(now())
+
+    profileId String
+    profile   SearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+    @@unique([profileId, source, externalId])
+    @@index([profileId, status, score])
+}
+
+model ScrapeRun {
+    id          String  @id @default(cuid())
+    profileId   String
+    profile     SearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+    status      String  @default("RUNNING") // RUNNING|DONE|ERROR
+    currentStep String?
+    statsJson   String  @default("{}") // { scraped, deduped, filtered, aiChecked, saved }
+    error       String?
+
+    startedAt  DateTime  @default(now())
+    finishedAt DateTime?
+
+    @@index([profileId, startedAt])
+}
