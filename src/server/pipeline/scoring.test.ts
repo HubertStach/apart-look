@@ -80,6 +80,8 @@ describe("computeScore", () => {
         petsAllowed: true,
         hasParking: null,
         district: null,
+        street: null,
+        price: null,
         deposit: null,
         adminRent: null,
         utilitiesCost: null,

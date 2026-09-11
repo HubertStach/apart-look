@@ -54,6 +54,7 @@ model Listing {
     rooms       Int?
     city        String?
     district    String?
+    street      String? // ulica mieszkania, jeśli AI ją wyłuska
     petsAllowed Boolean? // null = nieznane
     hasParking  Boolean?
     imageUrl    String?

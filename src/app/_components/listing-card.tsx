@@ -78,7 +78,11 @@ export function ListingCard({ listing }: { listing: Listing }) {
           )}
           {listing.area != null && <span className="text-mocha">{listing.area} m²</span>}
           {listing.rooms != null && <span className="text-mocha">{listing.rooms} pok.</span>}
-          {listing.district && <span className="text-mocha/80">📍 {listing.district}</span>}
+          {(listing.district ?? listing.street) && (
+            <span className="text-mocha/80">
+              📍 {[listing.district, listing.street].filter(Boolean).join(", ")}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-1">

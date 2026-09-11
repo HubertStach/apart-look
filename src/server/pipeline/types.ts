@@ -11,6 +11,10 @@ export interface AiExtraction {
   petsAllowed: boolean | null;
   hasParking: boolean | null;
   district: string | null;
+  /** Nazwa ulicy mieszkania, jeśli podana w opisie — inaczej null. */
+  street: string | null;
+  /** Cena najmu (główna kwota) wyłuskana z opisu przez AI — uzupełnia dane scrapera. */
+  price: number | null;
   deposit: number | null;
   adminRent: number | null;
   /** Koszt mediów (prąd/gaz/woda) w zł/mies. — dokładny lub przybliżony, jeśli podany. */

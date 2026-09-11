@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { ListingCollection } from "./collection";
 import { DedupeStep } from "./steps/dedupe";
 import { HardFilterStep } from "./steps/hard-filter";
+import { AreaFilterStep } from "./steps/area-filter";
 import { PreScoreStep } from "./steps/pre-score";
 import { TotalCostFilterStep } from "./steps/total-cost-filter";
 import type { PipelineContext, ScrapedListing } from "./types";
@@ -104,6 +105,37 @@ describe("HardFilterStep", () => {
   });
 });
 
+describe("AreaFilterStep", () => {
+  it("uzupełnia metraż z treści (regex) i odrzuca poza widełkami", async () => {
+    const col = new ListingCollection([
+      l({ externalId: "1", area: undefined, title: "Mieszkanie 55 m² z balkonem", description: "" }),
+      l({ externalId: "2", area: undefined, title: "Kawalerka 25 m²", description: "" }),
+    ]);
+    const out = await new AreaFilterStep().run(col, ctx({ areaMin: 40 }));
+    expect(out.active()).toHaveLength(1);
+    expect(out.active()[0]!.externalId).toBe("1");
+    expect(out.active()[0]!.area).toBe(55); // uzupełnione z tekstu
+    expect(out.rejected()[0]!.rejected!.reason).toContain("powierzchnia < 40");
+  });
+
+  it("NIE odrzuca gdy metraż nieznany (regex nic nie znalazł)", async () => {
+    const col = new ListingCollection([
+      l({ externalId: "1", area: undefined, title: "Mieszkanie w centrum", description: "3 pokoje" }),
+    ]);
+    const out = await new AreaFilterStep().run(col, ctx({ areaMin: 40, areaMax: 60 }));
+    expect(out.active()).toHaveLength(1);
+  });
+
+  it("respektuje powierzchnię podaną przez scraper (nie nadpisuje)", async () => {
+    const col = new ListingCollection([
+      l({ externalId: "1", area: 48, title: "Mieszkanie 999 m²" }),
+    ]);
+    const out = await new AreaFilterStep().run(col, ctx({ areaMax: 60 }));
+    expect(out.active()).toHaveLength(1);
+    expect(out.active()[0]!.area).toBe(48);
+  });
+});
+
 describe("PreScoreStep", () => {
   it("odrzuca oferty poniżej progu wstępnej oceny", async () => {
     const col = new ListingCollection([
@@ -136,6 +168,8 @@ describe("TotalCostFilterStep", () => {
           petsAllowed: null,
           hasParking: null,
           district: null,
+          street: null,
+          price: null,
           deposit: null,
           adminRent: 400,
           utilitiesCost: 300,
@@ -167,6 +201,8 @@ describe("TotalCostFilterStep", () => {
           petsAllowed: null,
           hasParking: null,
           district: null,
+          street: null,
+          price: null,
           deposit: null,
           adminRent: 1000,
           utilitiesCost: 1000,
