@@ -60,8 +60,10 @@ w środku zdania):
   rozbicia → tutaj (adminRent zostaw null). Media niewspomniane → null (nie szacuj).
 
 PRIORYTET 2 — ULICA. street: ulica, przy której jest mieszkanie, jeśli podana — zwróć zapis
-z przedrostkiem, np. "ul. Długa", "al. Jana Pawła II", "os. Widok", "pl. Wolności". Jeśli ulicy
-nie podano, null. district: nazwa dzielnicy/osiedla jeśli podana, inaczej null.
+z przedrostkiem ORAZ numerem domu, gdy jest w tekście, np. "ul. Długa 12", "al. Jana Pawła II 40",
+"os. Widok", "pl. Wolności". Numer domu ZACHOWAJ (uściśla lokalizację na mapie); nie dodawaj go,
+gdy go nie ma. Jeśli ulicy nie podano, null. district: nazwa dzielnicy/osiedla jeśli podana,
+inaczej null.
 
 PRIORYTET 3 — POKÓJ vs MIESZKANIE. isRoomInSharedApartment: true, gdy wynajmowany jest POKÓJ
 w mieszkaniu współdzielonym z innymi lokatorami (szczególnie gdy ogłoszenie udaje kawalerkę).

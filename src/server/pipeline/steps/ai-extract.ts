@@ -1,5 +1,9 @@
 import type { ListingCollection } from "../collection";
-import { ollamaJson, isOllamaAvailable, resetOllamaHealth } from "../../ai/ollama";
+import {
+  analyzeWithFallback,
+  isAiAvailable,
+  resetAiHealth,
+} from "../../ai/provider";
 import {
   AI_SYSTEM_PROMPT,
   aiExtractionSchema,
@@ -8,18 +12,20 @@ import {
 import type { PipelineContext, PipelineStep } from "../types";
 
 /**
- * Wzbogaca aktywne ogłoszenia o dane wyekstrahowane przez lokalny model (Ollama).
- * Degradacja: gdy Ollama niedostępna → ustawia ai=null i pipeline działa dalej
- * (scoring traktuje brakujące pola jako "nieznane").
+ * Wzbogaca aktywne ogłoszenia o dane wyekstrahowane przez AI (OpenRouter jako
+ * primary dla całego przebiegu; przy błędzie w trakcie przebiegu — fallback,
+ * "sticky", na lokalną Ollamę dla reszty ofert — patrz `ai/provider.ts`).
+ * Degradacja: gdy żaden provider niedostępny → ustawia ai=null i pipeline działa
+ * dalej (scoring traktuje brakujące pola jako "nieznane").
  */
 export class AiExtractStep implements PipelineStep {
   readonly name = "Analiza AI";
 
   async run(col: ListingCollection, ctx: PipelineContext): Promise<ListingCollection> {
-    resetOllamaHealth();
-    const available = await isOllamaAvailable();
+    resetAiHealth();
+    const available = await isAiAvailable();
     if (!available) {
-      ctx.log("⚠ Ollama niedostępna — pomijam analizę AI (oferty przejdą bez wzbogacenia).");
+      ctx.log("⚠ AI niedostępne (OpenRouter i Ollama) — pomijam analizę AI (oferty przejdą bez wzbogacenia).");
       for (const l of col.active()) l.ai = null;
       return col;
     }
@@ -27,16 +33,19 @@ export class AiExtractStep implements PipelineStep {
     let done = 0;
     const total = col.active().length;
 
-    // concurrency 1 — lokalny model, jeden request na raz
+    // concurrency 1 — lokalny model liczy jeden request na raz (bezpieczne też dla OpenRouter).
     await col.forEachActive(
       async (l) => {
         try {
-          const result = await ollamaJson({
-            system: AI_SYSTEM_PROMPT,
-            prompt: buildExtractionPrompt(l.title, l.description ?? ""),
-            schema: aiExtractionSchema,
-          });
-          l.ai = result;
+          l.ai = await analyzeWithFallback(
+            {
+              system: AI_SYSTEM_PROMPT,
+              prompt: buildExtractionPrompt(l.title, l.description ?? ""),
+              schema: aiExtractionSchema,
+            },
+            (provider, err) =>
+              ctx.log(`AI: ${provider} zawiódł (${String(err)}) — próba fallbacku.`),
+          );
         } catch (err) {
           ctx.log(`AI błąd dla ${l.url}: ${String(err)}`);
           l.ai = null;

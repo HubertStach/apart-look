@@ -86,18 +86,23 @@ export function extractAreaFromText(input: string | null | undefined): number | 
  * Wyszukuje ulicę/aleję/osiedle/plac w treści (tytuł + opis) za pomocą REGEX.
  * Działa na ORYGINALNYM tekście (zachowuje wielkość liter nazwy). Dopasowuje
  * przedrostek ("ul.", "ulica", "al.", "aleja", "os.", "osiedle", "pl.", "plac")
- * i 1–3 kolejne wyrazy nazwy (wielka litera / cyfra / liczba rzymska), np.
- * "ul. Długa", "al. Jana Pawła II", "os. Widok", "ul. 3 Maja".
+ * i 1–4 kolejne wyrazy nazwy (wielka litera / cyfra / liczba rzymska) wraz z
+ * ewentualnym numerem domu, np. "ul. Długa 12", "al. Jana Pawła II 40",
+ * "os. Widok", "ul. 3 Maja".
  *
  * Nazwę kończy: znak nowej linii, spacja przechodząca w koniec/interpunkcję oraz
- * znaki `, . ; : ! ? / ( )`. Łącznik między wyrazami to tylko spacja/tabulator
- * (`[ \t]`), więc newline NIE zlewa nazwy z tekstem z następnej linii.
- * Zwraca znormalizowany zapis z krótkim przedrostkiem (np. "ul. Długa") lub undefined.
+ * znaki `, . ; : ! ? / ( ) < > " '` (m.in. markup HTML). Łącznik między wyrazami
+ * to tylko spacja/tabulator (`[ \t]`), więc newline NIE zlewa nazwy z następną linią.
+ * Zwraca znormalizowany zapis z krótkim przedrostkiem i — gdy podany — numerem
+ * domu (np. "ul. Długa 12"), inaczej undefined. Numer domu ZACHOWUJEMY, bo
+ * uściśla geokodowanie (Nominatim, zapytanie strukturalne w geo.ts).
  */
 export function extractStreetFromText(input: string | null | undefined): string | undefined {
   if (!input) return undefined;
+  // {0,3} (a nie {0,2}) — dodatkowy token mieści końcowy numer domu przy dłuższych
+  // nazwach ("al. Jana Pawła II 40"), którego wcześniej nie obejmowaliśmy.
   const re =
-    /\b(ul|ulica|ulicy|al|aleja|aleje|alei|os|osiedle|osiedla|pl|plac)\b\.?[ \t]+([A-ZŻŹĆĄŚĘŁÓŃ0-9][^\s,.;:!?/()]*(?:[ \t]+(?:[A-ZŻŹĆĄŚĘŁÓŃ0-9][^\s,.;:!?/()]*|[IVX]+)){0,2})/;
+    /\b(ul|ulica|ulicy|al|aleja|aleje|alei|os|osiedle|osiedla|pl|plac)\b\.?[ \t]+([A-ZŻŹĆĄŚĘŁÓŃ0-9][^\s,.;:!?/()<>"']*(?:[ \t]+(?:[A-ZŻŹĆĄŚĘŁÓŃ0-9][^\s,.;:!?/()<>"']*|[IVX]+)){0,3})/;
   const m = re.exec(input);
   if (!m) return undefined;
 
@@ -116,10 +121,9 @@ export function extractStreetFromText(input: string | null | undefined): string 
     plac: "pl.",
   };
   const prefix = prefixMap[m[1]!.toLowerCase()] ?? "ul.";
-  let name = m[2]!.replace(/[.,;:!?/)]+$/, "").trim();
-  // Utnij końcowy numer domu (liczba arabska, opcjonalnie z literą: "12", "5a"),
-  // ale zachowaj liczby rzymskie ("II") i liczby na początku nazwy ("3 Maja").
-  name = name.replace(/\s+\d+[a-zA-Z]?$/, "").trim();
+  // Zachowujemy końcowy numer domu — nie ucinamy go już (regex łapie go jako
+  // ostatni token nazwy). Zdejmujemy tylko końcową interpunkcję/markup.
+  const name = m[2]!.replace(/[.,;:!?/)<>"']+$/, "").trim();
   if (!name) return undefined;
   return `${prefix} ${name}`;
 }

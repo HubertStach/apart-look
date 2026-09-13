@@ -83,7 +83,7 @@ export function ListingList() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {listings.data?.map((l) => (
               <ListingCard key={l.id} listing={l} />
             ))}

@@ -2,6 +2,7 @@
 
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
+import { ListingMap } from "./listing-map";
 
 type Listing = RouterOutputs["listing"]["list"][number];
 
@@ -19,7 +20,7 @@ function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone
     clay: "bg-beige text-cocoa",
   };
   return (
-    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${tones[tone]}`}>
+    <span className={`rounded px-2 py-0.5 text-xs font-medium ${tones[tone]}`}>
       {children}
     </span>
   );
@@ -37,31 +38,35 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const scorePct = Math.round(score * 100);
 
   return (
-    <article className="flex gap-3 rounded-lg border border-linen bg-panel p-3 shadow-sm transition-shadow hover:shadow-md">
-      {listing.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={listing.imageUrl}
-          alt=""
-          className="h-28 w-36 shrink-0 rounded-md object-cover"
-        />
-      ) : (
-        <div className="flex h-28 w-36 shrink-0 items-center justify-center rounded-md bg-ecru text-mocha/50">
-          brak zdjęcia
-        </div>
-      )}
+    <article className="flex h-80 items-stretch gap-4 rounded-xl border border-linen bg-panel p-4 shadow-sm transition-shadow hover:shadow-md">
+      {/* KOLUMNA 1 — zdjęcie */}
+      <div className="min-w-0 flex-1 basis-0">
+        {listing.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={listing.imageUrl}
+            alt=""
+            className="h-full w-full rounded-lg object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center rounded-lg bg-ecru text-mocha/50">
+            brak zdjęcia
+          </div>
+        )}
+      </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate text-sm font-semibold text-cocoa">{listing.title}</h3>
-          <div className="flex shrink-0 items-center gap-1">
-            <div className="h-2 w-16 overflow-hidden rounded-full bg-beige">
+      {/* KOLUMNA 2 — opis */}
+      <div className="flex min-w-0 min-h-0 flex-1 basis-0 flex-col gap-2 overflow-y-auto pr-1">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="line-clamp-2 text-base font-semibold text-cocoa">{listing.title}</h3>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <div className="h-2.5 w-14 overflow-hidden rounded-full bg-beige">
               <div
                 className={`h-full ${scoreColor(score)}`}
                 style={{ width: `${scorePct}%` }}
               />
             </div>
-            <span className="w-8 text-right text-xs font-bold text-mocha">
+            <span className="w-9 text-right text-sm font-bold text-mocha">
               {scorePct}%
             </span>
           </div>
@@ -69,7 +74,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
           {listing.price != null && (
-            <span className="text-base font-bold text-cocoa">
+            <span className="text-lg font-bold text-cocoa">
               {listing.price.toLocaleString("pl-PL")} zł
               {listing.utilities == null && (
                 <span className="ml-1 text-xs font-normal text-mocha/60">+ media</span>
@@ -80,12 +85,12 @@ export function ListingCard({ listing }: { listing: Listing }) {
           {listing.rooms != null && <span className="text-mocha">{listing.rooms} pok.</span>}
           {(listing.district ?? listing.street) && (
             <span className="text-mocha/80">
-              📍 {[listing.district, listing.street].filter(Boolean).join(", ")}
+              📍 {[listing.district, listing.street].filter((p) => p && p !== "null").join(", ")}
             </span>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5">
           <Badge tone="clay">{listing.source}</Badge>
           {listing.petsAllowed === true && <Badge tone="green">🐾 zwierzęta OK</Badge>}
           {listing.petsAllowed === false && <Badge tone="red">🐾 bez zwierząt</Badge>}
@@ -126,25 +131,25 @@ export function ListingCard({ listing }: { listing: Listing }) {
         )}
 
         {listing.aiSummary && (
-          <p className="line-clamp-2 text-xs text-mocha/80" title={listing.aiSummary}>
+          <p className="line-clamp-3 text-xs text-mocha/80" title={listing.aiSummary}>
             {listing.aiSummary}
           </p>
         )}
 
-        <div className="mt-auto flex items-center gap-3 pt-1 text-xs">
+        <div className="mt-auto flex items-center gap-3 pt-1 text-sm">
           <a
             href={listing.url}
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-clay hover:text-clay-dark hover:underline"
           >
-            Zobacz ogłoszenie ↗
+            Zobacz ↗
           </a>
           <button
             onClick={() => favorite.mutate({ id: listing.id, favorite: !listing.favorite })}
             className={listing.favorite ? "text-amber-500" : "text-mocha/60 hover:text-amber-400"}
           >
-            {listing.favorite ? "★ ulubione" : "☆ ulubione"}
+            {listing.favorite ? "★" : "☆"}
           </button>
           <button
             onClick={() => hide.mutate({ id: listing.id, hidden: !listing.hidden })}
@@ -153,6 +158,21 @@ export function ListingCard({ listing }: { listing: Listing }) {
             {listing.hidden ? "przywróć" : "ukryj"}
           </button>
         </div>
+      </div>
+
+      {/* KOLUMNA 3 — mapa */}
+      <div className="min-w-0 flex-1 basis-0">
+        {listing.street ? (
+          <ListingMap
+            street={listing.street}
+            city={listing.city}
+            district={listing.district}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center rounded-md bg-ecru text-center text-xs text-mocha/50">
+            brak ulicy — mapa niedostępna
+          </div>
+        )}
       </div>
     </article>
   );

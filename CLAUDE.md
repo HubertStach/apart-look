@@ -85,14 +85,15 @@ app/
     scrape-controls.tsx       # "Szukaj" + polling postępu przebiegu
     listing-list.tsx          # środkowy panel: filtry + lista
     listing-card.tsx          # karta oferty (cena, score, badge, akcje)
+    listing-map.tsx           # mapka OSM w karcie (geo.geocode → embed iframe)
 server/
   db.ts                       # singleton PrismaClient
   api/
-    root.ts                   # appRouter = { profile, listing, scrape }
+    root.ts                   # appRouter = { profile, listing, scrape, geo }
     trpc.ts                   # kontekst + publicProcedure
     helpers/active-profile.ts # getActiveProfile(Id) z auto-promocją
     schemas/profile.ts        # Zod: profileInputSchema, parseDistricts
-    routers/{profile,listing,scrape}.ts
+    routers/{profile,listing,scrape,geo}.ts
   ai/
     ollama.ts                 # klient Ollama (structured outputs + Zod)
     extraction.ts             # schemat + prompt ekstrakcji
@@ -189,16 +190,38 @@ OLX padnie, Otodom i tak leci. Puste wyniki logują ostrzeżenie, nie błąd.
 
 ## 6. Warstwa AI (`server/ai/`)
 
-Ollama przez `POST /api/chat` ze **structured outputs**: `format` = JSON Schema
-wygenerowany z Zod (`zod-to-json-schema`) → model musi zwrócić poprawny JSON.
-Jeden call łączy ekstrakcję danych (zwierzęta, parking, dzielnica, kaucja, czynsz
-dodatkowy, umeblowanie) i weryfikację typu oferty (`isLongTermApartmentRental` —
-odsiewa pokoje/doby/sprzedaż/zamianę). `AiExtract` i `AiVerify` czytają wspólny
-wynik z `listing.ai`.
+**Warstwa providerów z fallbackiem.** Wspólny interfejs `AiProvider` (`provider.ts`)
++ orkiestrator `analyzeWithFallback`: przy KAŻDEJ ofercie próbuje po kolei każdego
+DOSTĘPNEGO providera z listy `PROVIDERS`, a przy błędzie (429 limit / 402 kredyty /
+5xx / timeout / niepoprawny JSON) przechodzi do następnego. Gdy wszystkie padną →
+rzuca błąd, konsument ustawia `l.ai = null` (degradacja, §4). `isAiAvailable()` =
+true, gdy CHOĆ JEDEN provider jest dostępny; `resetAiHealth()` zeruje cache
+health-checków na start przebiegu.
 
-Konfiguracja: `OLLAMA_URL`, `OLLAMA_MODEL` (domyślnie `qwen2.5:7b-instruct`;
-alternatywy: bielik dla lepszego PL, gemma dla szybkości). Health-check przed
-analizą — brak Ollamy = pominięcie kroku, nie błąd. Wymaga `ollama pull <model>`.
+**Obecnie: TYLKO Ollama (lokalnie).** Flaga `OPENROUTER_ENABLED` w `provider.ts`
+jest `false` — `PROVIDERS = [ollamaProvider]`. Kod OpenRoutera (`openrouter.ts`)
+pozostaje kompletny i testowany, ale nieużywany. Aby go włączyć (po naprawie),
+ustaw `OPENROUTER_ENABLED = true` → wróci strategia „OpenRouter (primary) → Ollama
+(fallback)" per-oferta.
+
+Wspólny prompt (`AI_SYSTEM_PROMPT`) i schemat (`aiExtractionSchema`, Zod) — jeden
+call łączy ekstrakcję (cena, ulica, dzielnica, kaucja, czynsz, media, umeblowanie,
+zwierzęta, parking) i weryfikację typu oferty (`isLongTermApartmentRental`,
+`isRoomInSharedApartment`). `zod-to-json-schema` generuje JSON Schema używany przez
+oba backendy. Kwoty pieniężne są sanityzowane (`moneyField`: [0, 100000], reszta → null).
+
+- **OpenRouter** (`openrouter.ts`): endpoint OpenAI-kompatybilny
+  `POST /chat/completions`. Model `inclusionai/ling-3.0-flash-vl:free` NIE wspiera
+  `response_format`, więc JSON wymuszamy przez **tool calling** (jedno narzędzie
+  `extract_listing`, `parameters` = JSON Schema z Zod, `tool_choice` wymusza wywołanie;
+  wynik z `tool_calls[].function.arguments` → `schema.parse`). Dostępny, gdy jest
+  `OPENROUTER_API_KEY`.
+- **Ollama** (`ollama.ts`): `POST /api/chat` ze **structured outputs** (`format` =
+  JSON Schema). Fallback lokalny. Health-check `GET /api/tags`.
+
+Konfiguracja: `OPENROUTER_API_KEY` (brak = OpenRouter wyłączony, tylko Ollama),
+`OPENROUTER_MODEL` (domyślnie `inclusionai/ling-3.0-flash-vl:free`), `OPENROUTER_URL`;
+`OLLAMA_URL`, `OLLAMA_MODEL`. Wymaga `ollama pull <model>` dla fallbacku.
 
 ---
 

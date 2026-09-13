@@ -1,6 +1,7 @@
 import { profileRouter } from "~/server/api/routers/profile";
 import { listingRouter } from "~/server/api/routers/listing";
 import { scrapeRouter } from "~/server/api/routers/scrape";
+import { geoRouter } from "~/server/api/routers/geo";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
   profile: profileRouter,
   listing: listingRouter,
   scrape: scrapeRouter,
+  geo: geoRouter,
 });
 
 // export type definition of API

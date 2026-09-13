@@ -56,12 +56,18 @@ describe("extractAreaFromText", () => {
 
 describe("extractStreetFromText", () => {
   it("wyłuskuje ulicę z różnymi przedrostkami i normalizuje zapis", () => {
-    expect(extractStreetFromText("Mieszkanie przy ul. Długa 12")).toBe("ul. Długa");
+    expect(extractStreetFromText("Mieszkanie przy ul. Długa 12")).toBe("ul. Długa 12");
     expect(extractStreetFromText("lokal na ulicy Marszałkowskiej")).toBe("ul. Marszałkowskiej");
-    expect(extractStreetFromText("al. Jana Pawła II 40")).toBe("al. Jana Pawła II");
+    expect(extractStreetFromText("al. Jana Pawła II 40")).toBe("al. Jana Pawła II 40");
     expect(extractStreetFromText("os. Widok, blok 3")).toBe("os. Widok");
-    expect(extractStreetFromText("pl. Wolności 1")).toBe("pl. Wolności");
+    expect(extractStreetFromText("pl. Wolności 1")).toBe("pl. Wolności 1");
     expect(extractStreetFromText("ul. 3 Maja")).toBe("ul. 3 Maja");
+  });
+
+  it("zachowuje numer domu (z literą) i ucina go dopiero na interpunkcji/markupie", () => {
+    expect(extractStreetFromText("ul. Krótka 5a")).toBe("ul. Krótka 5a");
+    expect(extractStreetFromText("ul. Długa 12, Kraków")).toBe("ul. Długa 12");
+    expect(extractStreetFromText("ul. Dominikanów 32</p>")).toBe("ul. Dominikanów 32");
   });
 
   it("zwraca undefined gdy brak ulicy", () => {
@@ -76,6 +82,8 @@ describe("extractStreetFromText", () => {
     expect(extractStreetFromText("mieszkanie przy ul. Krótka. Blisko centrum")).toBe("ul. Krótka");
     expect(extractStreetFromText("os. Widok: parking w cenie")).toBe("os. Widok");
     expect(extractStreetFromText("al. Jana Pawła II\r\nblok B")).toBe("al. Jana Pawła II");
+    expect(extractStreetFromText("ul. Dominikanów 32</p>")).toBe("ul. Dominikanów 32");
+    expect(extractStreetFromText('ul. Długa" class="x')).toBe("ul. Długa");
   });
 });
 
