@@ -9,7 +9,8 @@ jaka jest architektura, czemu służy i gdzie są wąskie gardła.
 
 Lokalna (single-user) aplikacja webowa do wyszukiwania mieszkań na wynajem.
 Scrapuje ogłoszenia z **OLX** i **Otodom**, przepuszcza je przez łańcuch filtrów
-i lokalny model AI (**Ollama**), ocenia dopasowanie do profilu użytkownika i
+i model AI (**OpenRouter** zdalnie, z fallbackiem na lokalną **Ollamę**), ocenia
+dopasowanie do profilu użytkownika i
 prezentuje wyniki w dwupanelowym interfejsie.
 
 Użytkownik tworzy **profile wyszukiwania**. Każdy profil ma:
@@ -190,19 +191,15 @@ OLX padnie, Otodom i tak leci. Puste wyniki logują ostrzeżenie, nie błąd.
 
 ## 6. Warstwa AI (`server/ai/`)
 
-**Warstwa providerów z fallbackiem.** Wspólny interfejs `AiProvider` (`provider.ts`)
-+ orkiestrator `analyzeWithFallback`: przy KAŻDEJ ofercie próbuje po kolei każdego
-DOSTĘPNEGO providera z listy `PROVIDERS`, a przy błędzie (429 limit / 402 kredyty /
-5xx / timeout / niepoprawny JSON) przechodzi do następnego. Gdy wszystkie padną →
-rzuca błąd, konsument ustawia `l.ai = null` (degradacja, §4). `isAiAvailable()` =
-true, gdy CHOĆ JEDEN provider jest dostępny; `resetAiHealth()` zeruje cache
-health-checków na start przebiegu.
-
-**Obecnie: TYLKO Ollama (lokalnie).** Flaga `OPENROUTER_ENABLED` w `provider.ts`
-jest `false` — `PROVIDERS = [ollamaProvider]`. Kod OpenRoutera (`openrouter.ts`)
-pozostaje kompletny i testowany, ale nieużywany. Aby go włączyć (po naprawie),
-ustaw `OPENROUTER_ENABLED = true` → wróci strategia „OpenRouter (primary) → Ollama
-(fallback)" per-oferta.
+**Warstwa providerów z fallbackiem PER RUN (nie per-oferta).** Wspólny interfejs
+`AiProvider` (`provider.ts`) + orkiestrator `analyzeWithFallback`. Kolejność
+providerów: OpenRouter (primary) → Ollama. Każdy nowy przebieg (`resetAiHealth()`)
+zaczyna od OpenRoutera; dopiero błąd W TRAKCIE przebiegu (429 limit / 402 kredyty /
+5xx / timeout / niepoprawny JSON) przełącza — "sticky" (`stickyIndex`) — resztę
+ofert TEGO przebiegu na Ollamę, bez ponownych prób na providerze, który już raz
+zawiódł. Gdy wszyscy dostępni providerzy zawiodą → rzuca błąd, konsument ustawia
+`l.ai = null` (degradacja, §4). `isAiAvailable()` = true, gdy CHOĆ JEDEN provider
+jest dostępny.
 
 Wspólny prompt (`AI_SYSTEM_PROMPT`) i schemat (`aiExtractionSchema`, Zod) — jeden
 call łączy ekstrakcję (cena, ulica, dzielnica, kaucja, czynsz, media, umeblowanie,
@@ -211,16 +208,15 @@ zwierzęta, parking) i weryfikację typu oferty (`isLongTermApartmentRental`,
 oba backendy. Kwoty pieniężne są sanityzowane (`moneyField`: [0, 100000], reszta → null).
 
 - **OpenRouter** (`openrouter.ts`): endpoint OpenAI-kompatybilny
-  `POST /chat/completions`. Model `inclusionai/ling-3.0-flash-vl:free` NIE wspiera
-  `response_format`, więc JSON wymuszamy przez **tool calling** (jedno narzędzie
-  `extract_listing`, `parameters` = JSON Schema z Zod, `tool_choice` wymusza wywołanie;
-  wynik z `tool_calls[].function.arguments` → `schema.parse`). Dostępny, gdy jest
-  `OPENROUTER_API_KEY`.
+  `POST /chat/completions`. Model `nex-agi/nex-n2.5-mini:free` wspiera natywne
+  **structured outputs** (`response_format: json_schema` = JSON Schema z Zod,
+  jak w Ollamie) — wynik z `choices[0].message.content` → `schema.parse`.
+  Dostępny, gdy jest `OPENROUTER_API_KEY`.
 - **Ollama** (`ollama.ts`): `POST /api/chat` ze **structured outputs** (`format` =
   JSON Schema). Fallback lokalny. Health-check `GET /api/tags`.
 
-Konfiguracja: `OPENROUTER_API_KEY` (brak = OpenRouter wyłączony, tylko Ollama),
-`OPENROUTER_MODEL` (domyślnie `inclusionai/ling-3.0-flash-vl:free`), `OPENROUTER_URL`;
+Konfiguracja: `OPENROUTER_API_KEY` (brak = OpenRouter niedostępny, tylko Ollama),
+`OPENROUTER_MODEL` (domyślnie `nex-agi/nex-n2.5-mini:free`), `OPENROUTER_URL`;
 `OLLAMA_URL`, `OLLAMA_MODEL`. Wymaga `ollama pull <model>` dla fallbacku.
 
 ---
@@ -283,7 +279,7 @@ tylko ten plik.**
 | Obszar | Wąskie gardło | Uwagi / mitygacja |
 |---|---|---|
 | **Scraping przeglądarką** | Playwright to kolejka **1 żądanie naraz** + throttle 1s. Kilka stron × 2 portale = dziesiątki sekund. Chromium zjada ~200–400 MB RAM na czas przebiegu. | Świadomie grzeczne tempo (anti-ban). RAM zwalniany przez `closeBrowser` w `finally`. Przy wielu stronach przebieg trwa minuty. |
-| **AI (Ollama)** | Największy koszt czasowy. `AiExtract` leci **sekwencyjnie** (concurrency 1) — model lokalny, jeden request naraz. Przy 150+ ofertach to minuty (kilka s/ofertę na CPU). | Sekwencyjność chroni lokalny GPU/CPU. Realny przebieg live: ~260 ofert, AI dominuje czas. Skalowanie: mniejszy model (gemma), mniej stron, albo batching. |
+| **AI (OpenRouter/Ollama)** | Największy koszt czasowy. AI leci **sekwencyjnie** (concurrency 1) — jeden request naraz. OpenRouter (primary): zależność od sieci + limity darmowego modelu. Ollama (fallback): kilka s/ofertę na CPU. Przy 150+ ofertach to minuty. | Sekwencyjność chroni lokalny GPU/CPU i limity OpenRoutera. Sticky fallback per-run: po pierwszym błędzie OpenRoutera reszta przebiegu leci przez Ollamę. Skalowanie: mniejszy model, mniej stron, albo batching. |
 | **SQLite** | Jeden plik, brak współbieżnego zapisu. Przy fire-and-forget pipeline zapisuje przez `upsert` w pętli (N zapytań). | OK dla single-user/lokalnie. Nie skaluje się na wielu równoległych użytkowników. |
 | **Fire-and-forget w procesie Next** | Przebieg żyje w procesie serwera. **Restart/crash gubi run** → zostaje wiszący RUNNING. | `scrape.start` oznacza wiszące (>30 min) jako ERROR. Brak kolejki zadań/workerów — świadomie, bo lokalnie. |
 | **Krucha zależność od struktury portali** | OLX API v1 i Otodom `__NEXT_DATA__` to nieoficjalne, niestabilne kontrakty. Zmiana po stronie portalu = ciche zero wyników lub błąd mapowania. `CITY_SLUGS` to twarda mapa 16 miast. | Defensywne mapowanie + `ScraperError` z czytelnym komunikatem. Reszta miast wymaga dopisania slugu. Warto trzymać fixture-testy mapperów. |
