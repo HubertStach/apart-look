@@ -9,8 +9,8 @@ jaka jest architektura, czemu służy i gdzie są wąskie gardła.
 
 Lokalna (single-user) aplikacja webowa do wyszukiwania mieszkań na wynajem.
 Scrapuje ogłoszenia z **OLX** i **Otodom**, przepuszcza je przez łańcuch filtrów
-i model AI (**OpenRouter** zdalnie, z fallbackiem na lokalną **Ollamę**), ocenia
-dopasowanie do profilu użytkownika i
+i model AI (lokalna **Ollama**; opcjonalnie **OpenRouter** zdalnie za flagą —
+patrz §6), ocenia dopasowanie do profilu użytkownika i
 prezentuje wyniki w dwupanelowym interfejsie.
 
 Użytkownik tworzy **profile wyszukiwania**. Każdy profil ma:
@@ -62,7 +62,7 @@ przez relatywną ścieżkę, np. `../../../../generated/prisma`. Uważaj na gł�
 │  ┌────────────────────────────────────────────── ▼──────────┐ │
 │  │ ListingPipeline (server-only, fire-and-forget)          │ │
 │  │  Scrape(OLX|Otodom|Mock) ▸ Dedupe ▸ HardFilter ▸        │ │
-│  │  FetchDetails ▸ AiExtract ▸ AiVerify ▸ Score ▸ Persist  │ │
+│  │  AreaFilter ▸ PreScore ▸ StreamProcess (AI+zapis)       │ │
 │  └───────┬─────────────────┬────────────────┬──────────────┘ │
 │          │                 │                │                 │
 │    smart-fetch        Ollama API      Prisma/SQLite           │
@@ -127,9 +127,15 @@ implementująca `PipelineStep` + jedna linijka `.use(...)` w
 
 **Kolejność kroków** (`pipeline/index.ts`):
 ```
-Scrape(OLX + Otodom | Mock) ▸ Dedupe ▸ HardFilter ▸ FetchDetails
-▸ AiExtract ▸ AiVerify ▸ Score ▸ Persist
+Scrape(OLX + Otodom | Mock) ▸ Dedupe ▸ HardFilter ▸ AreaFilter
+▸ PreScore ▸ StreamProcess
 ```
+`StreamProcess` to strumieniowy „ogon": dla KAŻDEGO ogłoszenia po kolei robi
+pobranie opisu ▸ analizę AI ▸ weryfikację typu oferty ▸ filtr kosztu całkowitego
+▸ scoring ▸ filtr progu ▸ NATYCHMIASTOWY zapis (upsert), więc mieszkania
+pojawiają się na tablicy na bieżąco. Kroki `FetchDetails`/`AiExtract`/`AiVerify`/
+`Score`/`Persist` istnieją jako osobne klasy (gotowe „klocki"), ale w domyślnym
+łańcuchu ich logika jest scalona w `StreamProcessStep`.
 
 Kluczowe zasady:
 - **Odrzucone oferty nie znikają.** `ListingCollection.reject()` oznacza je
@@ -151,9 +157,19 @@ przeglądarkę (`closeBrowser`).
 ```
 score = Σ(wᵢ · matchᵢ) / Σ(wᵢ)   ∈ [0,1]   (Σw=0 → 1)
 ```
-- cena: liniowo, taniej = lepiej; powierzchnia: liniowo, więcej = lepiej,
-- dzielnica: 1 gdy pasuje (po normalizacji diakrytyków), 0.4 nieznana, 0 obca,
-- zwierzęta/parking: 1/0.5(nieznane)/0; dane z AI mają pierwszeństwo nad scraperem.
+- cena: liniowo, taniej = lepiej — gradient działa też przy JEDNYM progu (sam
+  `priceMax`: `(max-price)/max`, poza budżetem 0); powierzchnia: więcej = lepiej,
+  przy samym `areaMin` liniowo z nasyceniem przy 2×min,
+- dzielnica: 1 gdy pasuje (po normalizacji diakrytyków), 0 obca, **nieznana →
+  null (NEUTRALNA, pomijana w średniej)** — nie karze braku danych w `PreScore`,
+- zwierzęta/parking: 1/0.5(nieznane)/0; **dane z AI mają pierwszeństwo nad
+  scraperem** (`listing.ai?.petsAllowed ?? listing.petsAllowed`) — bez ekstrakcji
+  AI te preferencje byłyby martwe (scraper ich nie podaje).
+
+Uwaga: brak `city` ze scrapera NIE odrzuca oferty — `HardFilterStep` uzupełnia je
+profilowym miastem (URL wyszukiwania był już zawężony do miasta), a `persist`
+zapisuje `l.city ?? profileCity`. Dzięki temu karta i mapka zawsze wskazują jedno
+konkretne miasto (geokoder Nominatim dostaje `countrycodes=pl`).
 
 `computeScore` to czysta funkcja — pokryta testami (`scoring.test.ts`).
 
@@ -192,32 +208,46 @@ OLX padnie, Otodom i tak leci. Puste wyniki logują ostrzeżenie, nie błąd.
 ## 6. Warstwa AI (`server/ai/`)
 
 **Warstwa providerów z fallbackiem PER RUN (nie per-oferta).** Wspólny interfejs
-`AiProvider` (`provider.ts`) + orkiestrator `analyzeWithFallback`. Kolejność
-providerów: OpenRouter (primary) → Ollama. Każdy nowy przebieg (`resetAiHealth()`)
-zaczyna od OpenRoutera; dopiero błąd W TRAKCIE przebiegu (429 limit / 402 kredyty /
-5xx / timeout / niepoprawny JSON) przełącza — "sticky" (`stickyIndex`) — resztę
-ofert TEGO przebiegu na Ollamę, bez ponownych prób na providerze, który już raz
-zawiódł. Gdy wszyscy dostępni providerzy zawiodą → rzuca błąd, konsument ustawia
+`AiProvider` (`provider.ts`) + orkiestrator `analyzeWithFallback`. Konsumenci
+(`stream-process.ts`) wołają orkiestrator, nigdy konkretnego providera.
+
+**STAN OBECNY: OpenRouter WYŁĄCZONY flagą `OPENROUTER_ENABLED = false`
+(`provider.ts`) — działa TYLKO lokalna Ollama.** Odpowiadając na pytania „który
+backend leci / w jakiej kolejności", czytaj tablicę `PROVIDERS` i flagę
+`OPENROUTER_ENABLED` w kodzie, nie ten opis. Kod OpenRoutera pozostaje w pełni
+skompilowany i przetestowany (unit-test woła `openRouterProvider.generateJson`
+bezpośrednio); ponowne włączenie = zmiana flagi na `true`.
+
+Mechanika fallbacku (aktywna, gdy `PROVIDERS` ma >1 wpis, tzn. po włączeniu
+OpenRoutera): każdy nowy przebieg (`resetAiHealth()`) zaczyna od `PROVIDERS[0]`;
+dopiero błąd W TRAKCIE przebiegu (429 limit / 402 kredyty / 5xx / timeout /
+niepoprawny JSON) przełącza — „sticky" (`stickyIndex`) — resztę ofert TEGO
+przebiegu na kolejny provider, bez ponownych prób na tym, który zawiódł. Gdy
+wszyscy dostępni providerzy zawiodą → rzuca błąd, konsument ustawia
 `l.ai = null` (degradacja, §4). `isAiAvailable()` = true, gdy CHOĆ JEDEN provider
 jest dostępny.
 
 Wspólny prompt (`AI_SYSTEM_PROMPT`) i schemat (`aiExtractionSchema`, Zod) — jeden
-call łączy ekstrakcję (cena, ulica, dzielnica, kaucja, czynsz, media, umeblowanie,
-zwierzęta, parking) i weryfikację typu oferty (`isLongTermApartmentRental`,
-`isRoomInSharedApartment`). `zod-to-json-schema` generuje JSON Schema używany przez
-oba backendy. Kwoty pieniężne są sanityzowane (`moneyField`: [0, 100000], reszta → null).
+call łączy ekstrakcję (cena, kaucja, czynsz administracyjny, media, ulica,
+dzielnica, `petsAllowed`, `hasParking`, `furnished`) i weryfikację typu oferty
+(`isLongTermApartmentRental`, `isRoomInSharedApartment`) plus `summary`.
+`petsAllowed`/`hasParking` zasilają scoring (scraper ich nie podaje); `furnished`
+służy tylko badge'owi w UI. Prompt jest priorytetowany (PRIORYTET 1–5) i zaczyna
+od twardej zasady: brak informacji → null, nie zgaduj, nie licz kwot, każda liczba
+trafia do co najwyżej JEDNEGO pola. `zod-to-json-schema` generuje JSON Schema dla
+obu backendów. Kwoty pieniężne są sanityzowane (`moneyField`: [0, 100000], reszta → null).
 
-- **OpenRouter** (`openrouter.ts`): endpoint OpenAI-kompatybilny
+- **Ollama** (`ollama.ts`): `POST /api/chat` ze **structured outputs** (`format` =
+  JSON Schema). Domyślny (i jedyny aktywny) backend. Health-check `GET /api/tags`.
+- **OpenRouter** (`openrouter.ts`, obecnie za flagą): endpoint OpenAI-kompatybilny
   `POST /chat/completions`. Model `nex-agi/nex-n2.5-mini:free` wspiera natywne
   **structured outputs** (`response_format: json_schema` = JSON Schema z Zod,
   jak w Ollamie) — wynik z `choices[0].message.content` → `schema.parse`.
-  Dostępny, gdy jest `OPENROUTER_API_KEY`.
-- **Ollama** (`ollama.ts`): `POST /api/chat` ze **structured outputs** (`format` =
-  JSON Schema). Fallback lokalny. Health-check `GET /api/tags`.
+  Dostępny, gdy jest `OPENROUTER_API_KEY` ORAZ `OPENROUTER_ENABLED = true`.
 
-Konfiguracja: `OPENROUTER_API_KEY` (brak = OpenRouter niedostępny, tylko Ollama),
-`OPENROUTER_MODEL` (domyślnie `nex-agi/nex-n2.5-mini:free`), `OPENROUTER_URL`;
-`OLLAMA_URL`, `OLLAMA_MODEL`. Wymaga `ollama pull <model>` dla fallbacku.
+Konfiguracja: `OLLAMA_URL`, `OLLAMA_MODEL` (wymaga `ollama pull <model>`);
+`OPENROUTER_API_KEY` (opcjonalny, brak = OpenRouter niedostępny),
+`OPENROUTER_MODEL` (domyślnie `nex-agi/nex-n2.5-mini:free`), `OPENROUTER_URL`.
 
 ---
 
@@ -248,8 +278,12 @@ tylko ten plik.**
 
 - Motyw „cozy" w `globals.css` jako tokeny Tailwind v4 `@theme` → utility:
   `bg-cream`, `bg-panel`, `bg-ecru`, `bg-beige`, `bg-sand`, `bg-clay`,
-  `text-cocoa`, `text-mocha`, `border-linen`. **Nie używaj klas slate/blue** —
-  trzymaj paletę.
+  `text-cocoa`, `text-mocha`, `border-linen`. Akcenty statusowe też jako tokeny
+  palety, NIE surowe `green/red` Tailwinda: `sage`/`sage-soft`/`sage-deep`
+  (pozytyw — score ≥0.75, badge „OK"/parking/umeblowane) i
+  `rust`/`rust-soft`/`rust-deep` (negatyw — badge „bez zwierząt"/nieumeblowane).
+  Surowe czerwienie zostają tylko dla akcji destrukcyjnych/błędów (usuń, ukryj).
+  **Nie używaj klas slate/blue** — trzymaj paletę.
 - `@import "tailwindcss" source(none)` + jawne `@source "../app"` / `"../server"`
   — bez tego Tailwind skanuje katalog domowy (patrz §9).
 - Stan serwera przez tRPC + React Query. Po zmianie aktywnego profilu
@@ -292,12 +326,18 @@ tylko ten plik.**
 ## 11. Testy
 
 `vitest` — testy jednostkowe czystej logiki (bez sieci/bazy):
-- `scoring.test.ts` — scoring i wagi,
+- `scoring.test.ts` — scoring i wagi (w tym gradient przy jednym progu,
+  pierwszeństwo danych AI nad scraperem dla pets/parking, neutralna dzielnica),
 - `text.test.ts` — parsery ceny/powierzchni/pokoi, normalizacja diakrytyków,
-- `steps.test.ts` — Dedupe i HardFilter (audyt odrzuceń).
+- `steps.test.ts` — Dedupe, HardFilter (audyt odrzuceń + normalizacja miasta),
+  AreaFilter, PreScore, TotalCostFilter,
+- `extraction.test.ts` — schemat AI: sanityzacja kwot + akceptacja
+  pets/parking/furnished (boolean|null),
+- `provider.test.ts` — orkiestrator providerów + wywołanie providera wprost.
 
-Mocki `SearchProfile` w testach muszą zawierać wszystkie pola schematu
-(np. `isActive`) — inaczej tsc się wywali. Scrapery i AI testowane E2E na żywo
+Mocki `SearchProfile` ORAZ `AiExtraction` w testach muszą zawierać wszystkie pola
+schematu (np. `isActive`, `petsAllowed`, `hasParking`, `furnished`) — inaczej tsc
+się wywali na shardzie, którego nie odpaliłeś. Scrapery i żywe AI testowane E2E
 (`scripts/e2e-*.mjs`), nie w vitest.
 
 ---

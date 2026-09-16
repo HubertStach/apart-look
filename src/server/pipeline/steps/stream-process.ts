@@ -47,7 +47,7 @@ export class StreamProcessStep implements PipelineStep {
 
     // 1) Zapisz od razu ogłoszenia odrzucone wcześniej (poza AI) — audyt odrzuceń.
     for (const l of col.all()) {
-      if (l.rejected) await persistListing(db, profile.id, l);
+      if (l.rejected) await persistListing(db, profile.id, l, profile.city);
     }
 
     resetAiHealth();
@@ -91,7 +91,7 @@ export class StreamProcessStep implements PipelineStep {
         };
       }
 
-      await persistListing(db, profile.id, l);
+      await persistListing(db, profile.id, l, profile.city);
       saved++;
       processed++;
       // Raport postępu po każdym ogłoszeniu → UI odświeża listę na bieżąco.

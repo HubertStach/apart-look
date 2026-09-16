@@ -8,6 +8,9 @@ const base = {
   deposit: null,
   adminRent: null,
   utilitiesCost: null,
+  petsAllowed: null,
+  hasParking: null,
+  furnished: null,
   isLongTermApartmentRental: true,
   isRoomInSharedApartment: false,
   summary: "",
@@ -36,5 +39,20 @@ describe("aiExtractionSchema — sanityzacja kwot", () => {
     expect(out.adminRent).toBe(650);
     expect(out.deposit).toBe(3000);
     expect(out.utilitiesCost).toBe(0);
+  });
+
+  it("akceptuje petsAllowed/hasParking jako boolean lub null", () => {
+    const yes = aiExtractionSchema.parse({ ...base, petsAllowed: true, hasParking: false });
+    expect(yes.petsAllowed).toBe(true);
+    expect(yes.hasParking).toBe(false);
+    const unknown = aiExtractionSchema.parse({ ...base, petsAllowed: null, hasParking: null });
+    expect(unknown.petsAllowed).toBeNull();
+    expect(unknown.hasParking).toBeNull();
+  });
+
+  it("akceptuje furnished jako boolean lub null", () => {
+    expect(aiExtractionSchema.parse({ ...base, furnished: true }).furnished).toBe(true);
+    expect(aiExtractionSchema.parse({ ...base, furnished: false }).furnished).toBe(false);
+    expect(aiExtractionSchema.parse({ ...base, furnished: null }).furnished).toBeNull();
   });
 });

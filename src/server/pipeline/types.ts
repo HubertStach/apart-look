@@ -17,6 +17,12 @@ export interface AiExtraction {
   adminRent: number | null;
   /** Koszt mediów (prąd/gaz/woda) w zł/mies. — dokładny lub przybliżony, jeśli podany. */
   utilitiesCost: number | null;
+  /** Czy zwierzęta są dozwolone (true), zabronione (false) czy brak wzmianki (null). */
+  petsAllowed: boolean | null;
+  /** Czy jest miejsce postojowe/garaż (true), brak (false) czy brak wzmianki (null). */
+  hasParking: boolean | null;
+  /** Czy mieszkanie jest umeblowane (true), nieumeblowane (false) czy brak wzmianki (null). */
+  furnished: boolean | null;
   /** Czy to na pewno długoterminowy najem całego mieszkania (nie pokój/doba/sprzedaż). */
   isLongTermApartmentRental: boolean;
   /** Czy to wynajem pokoju w mieszkaniu współdzielonym z innymi lokatorami. */

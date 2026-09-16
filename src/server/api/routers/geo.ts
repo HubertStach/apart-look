@@ -64,6 +64,9 @@ async function geocode(street: string, city?: string | null): Promise<GeoResult 
     // ogranicza Nominatim do warstwy adresowej → zwraca ulicę/dom, nie POI.
     url.searchParams.set("street", cleanedStreet);
     if (cityTerm) url.searchParams.set("city", cityTerm);
+    // Ograniczenie do Polski — ulica o tej samej nazwie istnieje w wielu krajach;
+    // countrycodes=pl gwarantuje, że mapka nie wyskoczy poza PL (PLAN pkt 1).
+    url.searchParams.set("countrycodes", "pl");
     url.searchParams.set("addressdetails", "0");
 
     const controller = new AbortController();

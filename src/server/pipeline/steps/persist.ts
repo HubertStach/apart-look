@@ -14,7 +14,7 @@ function safeMoney(v: number | null | undefined): number | null {
 }
 
 /** Buduje rekord DB z ogłoszenia (wspólne dla zapisu batch i strumieniowego). */
-export function buildListingData(l: ScrapedListing) {
+export function buildListingData(l: ScrapedListing, profileCity?: string) {
   const passed = !l.rejected;
   return {
     url: l.url,
@@ -24,14 +24,16 @@ export function buildListingData(l: ScrapedListing) {
     rentExtra: safeMoney(l.ai?.adminRent ?? l.rentExtra),
     area: l.area ?? null,
     rooms: l.rooms ?? null,
-    city: l.city ?? null,
+    // Miasto zawsze konkretne: wynik scrapera, a gdy portal go nie podał —
+    // profilowe miasto (URL wyszukiwania był już zawężony do niego). Patrz PLAN pkt 1.
+    city: l.city ?? profileCity ?? null,
     district: l.ai?.district ?? l.district ?? null,
     street: extractStreetFromText(`${l.title} ${l.description ?? ""}`) ?? l.ai?.street ?? null,
-    petsAllowed: l.petsAllowed ?? null,
-    hasParking: l.hasParking ?? null,
+    petsAllowed: l.ai?.petsAllowed ?? l.petsAllowed ?? null,
+    hasParking: l.ai?.hasParking ?? l.hasParking ?? null,
     imageUrl: l.imageUrl ?? null,
     deposit: safeMoney(l.ai?.deposit),
-    furnished: null,
+    furnished: l.ai?.furnished ?? null,
     utilities: safeMoney(l.ai?.utilitiesCost),
     score: l.score ?? null,
     aiSummary: l.ai?.summary ?? null,
@@ -49,8 +51,9 @@ export async function persistListing(
   db: PrismaClient,
   profileId: string,
   l: ScrapedListing,
+  profileCity?: string,
 ): Promise<void> {
-  const data = buildListingData(l);
+  const data = buildListingData(l, profileCity);
   await db.listing.upsert({
     where: {
       profileId_source_externalId: {
@@ -79,7 +82,7 @@ export class PersistStep implements PipelineStep {
     let saved = 0;
 
     for (const l of col.all()) {
-      await persistListing(db, profile.id, l);
+      await persistListing(db, profile.id, l, profile.city);
       saved++;
     }
 

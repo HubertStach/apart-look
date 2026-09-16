@@ -24,6 +24,14 @@ export class HardFilterStep implements PipelineStep {
       (l) => `miasto (${l.city ?? "?"} ≠ ${profile.city})`,
     );
 
+    // Normalizacja: oferty bez nazwy miasta przyjmują miasto z profilu.
+    // URL wyszukiwania (OLX city_id / Otodom slug) był już zawężony do tego
+    // miasta, więc brak nazwy = to samo miasto — nie inne. Dzięki temu karta
+    // i mapka zawsze wskazują konkretne, jedno miasto (PLAN pkt 1).
+    for (const l of col.active()) {
+      l.city ??= profile.city;
+    }
+
     // liczba pokoi — jeśli scraper podał, musi się zgadzać dokładnie
     col.reject(
       this.name,

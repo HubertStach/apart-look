@@ -85,6 +85,13 @@ describe("HardFilterStep", () => {
     expect(out.active()).toHaveLength(1);
   });
 
+  it("uzupełnia brakujące miasto profilowym (normalizacja lokalizacji)", async () => {
+    const col = new ListingCollection([l({ externalId: "1", city: undefined })]);
+    const out = await new HardFilterStep().run(col, ctx({ city: "Kraków" }));
+    expect(out.active()).toHaveLength(1);
+    expect(out.active()[0]!.city).toBe("Kraków");
+  });
+
   it("odrzuca po widełkach ceny", async () => {
     const col = new ListingCollection([
       l({ externalId: "1", price: 2500 }),
@@ -171,6 +178,9 @@ describe("TotalCostFilterStep", () => {
           deposit: null,
           adminRent: 400,
           utilitiesCost: 300,
+          petsAllowed: null,
+          hasParking: null,
+          furnished: null,
           isLongTermApartmentRental: true,
           isRoomInSharedApartment: false,
           summary: "",
@@ -200,6 +210,9 @@ describe("TotalCostFilterStep", () => {
           deposit: null,
           adminRent: 1000,
           utilitiesCost: 1000,
+          petsAllowed: null,
+          hasParking: null,
+          furnished: null,
           isLongTermApartmentRental: true,
           isRoomInSharedApartment: false,
           summary: "",

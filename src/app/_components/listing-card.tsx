@@ -7,7 +7,7 @@ import { ListingMap } from "./listing-map";
 type Listing = RouterOutputs["listing"]["list"][number];
 
 function scoreColor(score: number): string {
-  if (score >= 0.75) return "bg-green-600";
+  if (score >= 0.75) return "bg-sage";
   if (score >= 0.5) return "bg-clay";
   return "bg-sand";
 }
@@ -15,8 +15,8 @@ function scoreColor(score: number): string {
 function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: string }) {
   const tones: Record<string, string> = {
     neutral: "bg-ecru text-cocoa",
-    green: "bg-green-100 text-green-800",
-    red: "bg-red-100 text-red-700",
+    green: "bg-sage-soft text-sage-deep",
+    red: "bg-rust-soft text-rust-deep",
     clay: "bg-beige text-cocoa",
   };
   return (
@@ -38,7 +38,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const scorePct = Math.round(score * 100);
 
   return (
-    <article className="flex min-h-80 items-stretch gap-4 rounded-xl border border-linen bg-panel p-4 shadow-sm transition-shadow hover:shadow-md">
+    <article className="flex max-h-[28rem] min-h-64 items-stretch gap-4 overflow-hidden rounded-xl border border-linen bg-panel p-4 shadow-sm transition-shadow hover:shadow-md">
       {/* KOLUMNA 1 — zdjęcie */}
       <div className="min-w-0 flex-1 basis-0">
         {listing.imageUrl ? (
@@ -56,7 +56,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
       </div>
 
       {/* KOLUMNA 2 — opis */}
-      <div className="flex min-w-0 flex-1 basis-0 flex-col gap-2 pr-1">
+      <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col gap-2 pr-1">
         <div className="flex items-start justify-between gap-3">
           <h3 className="line-clamp-2 text-base font-semibold text-cocoa">{listing.title}</h3>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -95,6 +95,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           {listing.petsAllowed === true && <Badge tone="green">🐾 zwierzęta OK</Badge>}
           {listing.petsAllowed === false && <Badge tone="red">🐾 bez zwierząt</Badge>}
           {listing.hasParking === true && <Badge tone="green">🅿️ parking</Badge>}
+          {listing.furnished === true && <Badge tone="green">🛋️ umeblowane</Badge>}
           {listing.furnished === false && <Badge tone="red">nieumeblowane</Badge>}
         </div>
 
@@ -130,7 +131,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         )}
 
         {listing.aiSummary && (
-          <p className="line-clamp-6 text-xs leading-relaxed text-mocha/80" title={listing.aiSummary}>
+          <p className="line-clamp-4 text-xs leading-relaxed text-mocha/80" title={listing.aiSummary}>
             {listing.aiSummary}
           </p>
         )}
@@ -146,7 +147,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           </a>
           <button
             onClick={() => favorite.mutate({ id: listing.id, favorite: !listing.favorite })}
-            className={listing.favorite ? "text-amber-500" : "text-mocha/60 hover:text-amber-400"}
+            className={listing.favorite ? "text-clay" : "text-mocha/60 hover:text-clay"}
           >
             {listing.favorite ? "★" : "☆"}
           </button>

@@ -292,7 +292,7 @@ export function ProfilePanel({ onCollapse }: { onCollapse?: () => void }) {
           {upsert.isPending ? "Zapisywanie…" : "💾 Zapisz profil"}
         </button>
         {upsert.isSuccess && (
-          <span className="text-center text-xs text-green-700">Zapisano ✓</span>
+          <span className="text-center text-xs text-sage-deep">Zapisano ✓</span>
         )}
       </div>
 

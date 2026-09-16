@@ -25,6 +25,12 @@ export const aiExtractionSchema = z.object({
   deposit: moneyField,
   adminRent: moneyField,
   utilitiesCost: moneyField,
+  // Preferencje scoringowe wyłuskiwane przez AI (scraper ich nie podaje):
+  // true = wprost dozwolone/dostępne, false = wprost zabronione/brak, null = brak wzmianki.
+  petsAllowed: z.boolean().nullable(),
+  hasParking: z.boolean().nullable(),
+  // Umeblowanie: true = umeblowane, false = nieumeblowane/do własnej aranżacji, null = brak wzmianki.
+  furnished: z.boolean().nullable(),
   isLongTermApartmentRental: z.boolean(),
   isRoomInSharedApartment: z.boolean(),
   summary: z.string(),
@@ -34,7 +40,10 @@ export type AiExtractionResult = z.infer<typeof aiExtractionSchema>;
 
 export const AI_SYSTEM_PROMPT = `Jesteś rzeczowym analitykiem ogłoszeń najmu mieszkań w Polsce.
 Na podstawie tytułu i opisu zwróć WYŁĄCZNIE obiekt JSON zgodny ze schematem.
-Zasada nadrzędna: jeśli informacji NIE MA w tekście, użyj null (dla list — []). Nigdy nie zgaduj.
+Zasada nadrzędna: jeśli informacji NIE MA w tekście, użyj null (dla list — []). Nigdy nie zgaduj,
+nie licz i nie zaokrąglaj kwot na własną rękę. Każda konkretna liczba z ogłoszenia trafia do CO
+NAJWYŻEJ JEDNEGO pola — nie powielaj tej samej kwoty w kilku polach (np. cena najmu nie może być
+jednocześnie kaucją ani czynszem administracyjnym).
 
 PRIORYTET 1 — CENA NAJMU (najważniejsze). Najpierw ustal price = miesięczną CENĘ NAJMU, czyli
 główną kwotę, którą najemca płaci właścicielowi za samo mieszkanie. To zwykle najwyższa,
@@ -64,7 +73,9 @@ jeśli w tekście jest odmieniona przez przypadek, sprowadź ją do mianownika:
 "na Marszałkowskiej" → "ul. Marszałkowska", "na alei Jana Pawła" → "al. Jana Pawła".
 Nazwy pochodzące od nazwiska/imienia zostaw bez zmian w części własnej (np. "ul. Jana Kilińskiego"
 pozostaje "ul. Jana Kilińskiego"). Pierwszą literę nazwy zapisz wielką. Jeśli ulicy nie podano,
-null. district: nazwa dzielnicy/osiedla jeśli podana, inaczej null.
+null. district: nazwa dzielnicy/osiedla mieszkania, jeśli podana — ale TYLKO gdy należy do miasta
+z ogłoszenia. Jeśli tekst wyraźnie wskazuje INNĄ miejscowość (sąsiednią gminę, podmiejską wieś)
+niż mieszkanie, NIE wpisuj jej jako dzielnicy — district = null. Gdy dzielnicy nie podano, null.
 
 PRIORYTET 3 — POKÓJ vs MIESZKANIE. isRoomInSharedApartment: true, gdy wynajmowany jest POKÓJ
 w mieszkaniu współdzielonym z innymi lokatorami (szczególnie gdy ogłoszenie udaje kawalerkę).
@@ -74,7 +85,19 @@ Sygnały: "pokój w mieszkaniu", "wspólna kuchnia/łazienka", "pozostałe pokoj
 isLongTermApartmentRental: true TYLKO dla długoterminowego najmu CAŁEGO mieszkania; false dla
 wynajmu pokoju, najmu na doby/krótkoterminowego, sprzedaży, zamiany, stancji.
 
-PRIORYTET 4 — OPIS (summary). Stwórz zwięzłe, rzeczowe PODSUMOWANIE CECH mieszkania i jego
+PRIORYTET 4 — ZWIERZĘTA, PARKING, UMEBLOWANIE (pola boolean, dozwolone też null). Reguła
+nadrzędna: brak wzmianki → null. Nigdy nie zgaduj — jeśli ogłoszenie milczy na dany temat, null.
+- petsAllowed: true, gdy ogłoszenie WPROST dopuszcza zwierzęta ("zwierzęta akceptowane",
+  "można z psem/kotem", "pet friendly", "zwierzęta OK"). false, gdy WPROST zabrania
+  ("bez zwierząt", "nie akceptujemy zwierząt", "zakaz zwierząt"). Brak wzmianki → null.
+- hasParking: true, gdy jest miejsce postojowe / garaż / parking (w cenie lub za dopłatą —
+  "miejsce postojowe", "garaż", "parking podziemny", "miejsce w hali"). false, gdy WPROST
+  zaznaczono brak ("bez miejsca postojowego", "brak parkingu"). Brak wzmianki → null.
+- furnished: true, gdy mieszkanie jest umeblowane ("umeblowane", "w pełni wyposażone",
+  "z meblami", "po umeblowaniu"). false, gdy WPROST nieumeblowane ("bez mebli", "nieumeblowane",
+  "do własnej aranżacji", "puste"). Brak wzmianki → null.
+
+PRIORYTET 5 — OPIS (summary). Stwórz zwięzłe, rzeczowe PODSUMOWANIE CECH mieszkania i jego
 LOKALIZACJI po polsku — same fakty z ogłoszenia, w naturalnych zdaniach (nie lista).
 TWARDY LIMIT: maksymalnie 3–4 zdania. Nie przekraczaj go — wybierz najważniejsze cechy i pomiń
 mniej istotne szczegóły, zamiast pisać dłużej.
