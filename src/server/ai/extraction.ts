@@ -19,16 +19,12 @@ const moneyField = z
  * Jeden wspólny call łączy ekstrakcję danych i weryfikację typu oferty.
  */
 export const aiExtractionSchema = z.object({
-  petsAllowed: z.boolean().nullable(),
-  hasParking: z.boolean().nullable(),
   district: z.string().nullable(),
   street: z.string().nullable(),
   price: moneyField,
   deposit: moneyField,
   adminRent: moneyField,
   utilitiesCost: moneyField,
-  furnishings: z.array(z.string()),
-  furnished: z.boolean().nullable(),
   isLongTermApartmentRental: z.boolean(),
   isRoomInSharedApartment: z.boolean(),
   summary: z.string(),
@@ -62,30 +58,35 @@ w środku zdania):
 PRIORYTET 2 — ULICA. street: ulica, przy której jest mieszkanie, jeśli podana — zwróć zapis
 z przedrostkiem ORAZ numerem domu, gdy jest w tekście, np. "ul. Długa 12", "al. Jana Pawła II 40",
 "os. Widok", "pl. Wolności". Numer domu ZACHOWAJ (uściśla lokalizację na mapie); nie dodawaj go,
-gdy go nie ma. Jeśli ulicy nie podano, null. district: nazwa dzielnicy/osiedla jeśli podana,
-inaczej null.
+gdy go nie ma. NAZWĘ ULICY ZAWSZE ZWRÓĆ W MIANOWNIKU (forma podstawowa, jak w rejestrze ulic) —
+jeśli w tekście jest odmieniona przez przypadek, sprowadź ją do mianownika:
+"mieszkanie na ul. Ślicznej" → "ul. Śliczna", "przy ulicy Długiej" → "ul. Długa",
+"na Marszałkowskiej" → "ul. Marszałkowska", "na alei Jana Pawła" → "al. Jana Pawła".
+Nazwy pochodzące od nazwiska/imienia zostaw bez zmian w części własnej (np. "ul. Jana Kilińskiego"
+pozostaje "ul. Jana Kilińskiego"). Pierwszą literę nazwy zapisz wielką. Jeśli ulicy nie podano,
+null. district: nazwa dzielnicy/osiedla jeśli podana, inaczej null.
 
 PRIORYTET 3 — POKÓJ vs MIESZKANIE. isRoomInSharedApartment: true, gdy wynajmowany jest POKÓJ
 w mieszkaniu współdzielonym z innymi lokatorami (szczególnie gdy ogłoszenie udaje kawalerkę).
 Sygnały: "pokój w mieszkaniu", "wspólna kuchnia/łazienka", "pozostałe pokoje wynajęte",
 "do wynajęcia jeden pokój", "mieszkanie 3-pokojowe, wynajmę 1 pokój", "współlokatorzy",
-"miejsce w pokoju", "mieszkanie studenckie". W innym razie false (null niedozwolone).
+"miejsce w pokoju". W innym razie false (null niedozwolone).
 isLongTermApartmentRental: true TYLKO dla długoterminowego najmu CAŁEGO mieszkania; false dla
 wynajmu pokoju, najmu na doby/krótkoterminowego, sprzedaży, zamiany, stancji.
 
-Pozostałe pola (uzupełnij TYLKO gdy wprost w tekście, inaczej null / []):
-- petsAllowed: true gdy zwierzęta dozwolone, false gdy wyraźnie zabronione, null gdy brak.
-- hasParking: true gdy jest miejsce/garaż, false gdy wyraźnie brak, null gdy brak.
-- furnishings: lista mebli/AGD wymienionych DOSŁOWNIE (["łóżko","szafa","lodówka","pralka"]),
-  inaczej []. furnished: true przy "umeblowane"/"w pełni wyposażone" LUB gdy w furnishings są
-  realne meble (łóżko, szafa, kanapa, stół, biurko) — nie samo AGD; false przy "nieumeblowane"/
-  "bez mebli"; inaczej null. Nie wnioskuj z kuchni/łazienki ani ze zdjęć.
-
-summary: dokładnie 2 rzeczowe zdania, bez marketingu (ZAKAZ słów: "urocze", "przytulne",
-"kameralne", "wymarzone", "idealne", "wyjątkowe", "cudowne", "gustowne" i podobnych — jeśli są
-w opisie, zignoruj je). Zdanie 1 = konkretna ZALETA (fakt: cena, lokalizacja, metraż, stan),
-zdanie 2 = konkretna WADA/RYZYKO lub — gdy brak wady — brakująca w ogłoszeniu informacja.
-Same fakty, zero przymiotników oceniających.`;
+PRIORYTET 4 — OPIS (summary). Stwórz zwięzłe, rzeczowe PODSUMOWANIE CECH mieszkania i jego
+LOKALIZACJI po polsku — same fakty z ogłoszenia, w naturalnych zdaniach (nie lista).
+TWARDY LIMIT: maksymalnie 3–4 zdania. Nie przekraczaj go — wybierz najważniejsze cechy i pomiń
+mniej istotne szczegóły, zamiast pisać dłużej.
+Zawrzyj przede wszystkim najważniejsze cechy oferty, o ile są w tekście: lokalizację/dzielnicę
+i otoczenie, metraż / liczbę pokoi / piętro, stan i umeblowanie, warunki finansowe (cena najmu,
+kaucja, czynsz administracyjny, media), a także kluczowe cechy: czy jest PARKING/garaż, czy
+dozwolone są ZWIERZĘTA, oraz czy ogłoszenie pochodzi od BIURA NIERUCHOMOŚCI / pośrednika i czy
+wymagana jest PROWIZJA (w jakiej wysokości, jeśli podana). Gdy oferta jest wyraźnie bezpośrednio
+od właściciela lub oznaczona "bez prowizji", również to zaznacz.
+Trzymaj się faktów z ogłoszenia. ZAKAZ słów marketingowych i ocen: "urocze", "przytulne",
+"kameralne", "przestronne", "wymarzone", "idealne", "wyjątkowe", "cudowne", "gustowne",
+"komfortowe", "słoneczne" i podobnych — jeśli są w opisie, zignoruj je i opisz same fakty.`;
 
 export function buildExtractionPrompt(title: string, description: string): string {
   return `TYTUŁ: ${title}\n\nOPIS:\n${description || "(brak opisu)"}`;

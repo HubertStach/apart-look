@@ -57,12 +57,13 @@ function boolMatch(value: boolean | undefined): number {
  * Scoring: średnia ważona dopasowań preferencji. Wagi = gwiazdki (0..5).
  * Zwraca wartość w [0, 1]. Gdy suma wag = 0 → 1 (brak preferencji = wszystko idealne).
  *
- * Efektywna wartość zwierząt/parkingu bierze pod uwagę dane AI (jeśli są).
+ * Efektywna wartość dzielnicy bierze pod uwagę dane AI (jeśli są);
+ * zwierzęta/parking pochodzą z danych scrapera.
  */
 export function computeScore(listing: ScrapedListing, profile: SearchProfile): number {
   const districts = parseDistricts(profile.districts);
-  const pets = listing.ai?.petsAllowed ?? listing.petsAllowed;
-  const parking = listing.ai?.hasParking ?? listing.hasParking;
+  const pets = listing.petsAllowed;
+  const parking = listing.hasParking;
   const district = listing.ai?.district ?? listing.district;
 
   const factors: { weight: number; match: number | null }[] = [

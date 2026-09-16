@@ -38,7 +38,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const scorePct = Math.round(score * 100);
 
   return (
-    <article className="flex h-80 items-stretch gap-4 rounded-xl border border-linen bg-panel p-4 shadow-sm transition-shadow hover:shadow-md">
+    <article className="flex min-h-80 items-stretch gap-4 rounded-xl border border-linen bg-panel p-4 shadow-sm transition-shadow hover:shadow-md">
       {/* KOLUMNA 1 — zdjęcie */}
       <div className="min-w-0 flex-1 basis-0">
         {listing.imageUrl ? (
@@ -56,7 +56,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
       </div>
 
       {/* KOLUMNA 2 — opis */}
-      <div className="flex min-w-0 min-h-0 flex-1 basis-0 flex-col gap-2 overflow-y-auto pr-1">
+      <div className="flex min-w-0 flex-1 basis-0 flex-col gap-2 pr-1">
         <div className="flex items-start justify-between gap-3">
           <h3 className="line-clamp-2 text-base font-semibold text-cocoa">{listing.title}</h3>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -95,7 +95,6 @@ export function ListingCard({ listing }: { listing: Listing }) {
           {listing.petsAllowed === true && <Badge tone="green">🐾 zwierzęta OK</Badge>}
           {listing.petsAllowed === false && <Badge tone="red">🐾 bez zwierząt</Badge>}
           {listing.hasParking === true && <Badge tone="green">🅿️ parking</Badge>}
-          {listing.furnished === true && <Badge tone="green">umeblowane</Badge>}
           {listing.furnished === false && <Badge tone="red">nieumeblowane</Badge>}
         </div>
 
@@ -131,7 +130,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         )}
 
         {listing.aiSummary && (
-          <p className="line-clamp-3 text-xs text-mocha/80" title={listing.aiSummary}>
+          <p className="line-clamp-6 text-xs leading-relaxed text-mocha/80" title={listing.aiSummary}>
             {listing.aiSummary}
           </p>
         )}

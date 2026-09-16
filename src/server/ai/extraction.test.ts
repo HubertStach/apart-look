@@ -2,16 +2,12 @@ import { describe, it, expect } from "vitest";
 import { aiExtractionSchema } from "./extraction";
 
 const base = {
-  petsAllowed: null,
-  hasParking: null,
   district: null,
   street: null,
   price: null,
   deposit: null,
   adminRent: null,
   utilitiesCost: null,
-  furnishings: [],
-  furnished: null,
   isLongTermApartmentRental: true,
   isRoomInSharedApartment: false,
   summary: "",

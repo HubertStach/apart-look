@@ -72,21 +72,17 @@ describe("computeScore", () => {
     expect(computeScore(makeListing({ district: "Podgórze" }), profile)).toBe(1);
   });
 
-  it("zwierzęta: dane AI mają pierwszeństwo", () => {
+  it("zwierzęta: używa danych scrapera", () => {
     const profile = makeProfile({ petsRequired: true, petsWeight: 5 });
     const listing = makeListing({
-      petsAllowed: false,
+      petsAllowed: true,
       ai: {
-        petsAllowed: true,
-        hasParking: null,
         district: null,
         street: null,
         price: null,
         deposit: null,
         adminRent: null,
         utilitiesCost: null,
-        furnishings: [],
-        furnished: null,
         isLongTermApartmentRental: true,
         isRoomInSharedApartment: false,
         summary: "",
