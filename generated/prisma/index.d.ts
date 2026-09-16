@@ -2475,6 +2475,7 @@ export namespace Prisma {
     rooms: number | null
     city: string | null
     district: string | null
+    street: string | null
     petsAllowed: boolean | null
     hasParking: boolean | null
     imageUrl: string | null
@@ -2505,6 +2506,7 @@ export namespace Prisma {
     rooms: number | null
     city: string | null
     district: string | null
+    street: string | null
     petsAllowed: boolean | null
     hasParking: boolean | null
     imageUrl: string | null
@@ -2535,6 +2537,7 @@ export namespace Prisma {
     rooms: number
     city: number
     district: number
+    street: number
     petsAllowed: number
     hasParking: number
     imageUrl: number
@@ -2587,6 +2590,7 @@ export namespace Prisma {
     rooms?: true
     city?: true
     district?: true
+    street?: true
     petsAllowed?: true
     hasParking?: true
     imageUrl?: true
@@ -2617,6 +2621,7 @@ export namespace Prisma {
     rooms?: true
     city?: true
     district?: true
+    street?: true
     petsAllowed?: true
     hasParking?: true
     imageUrl?: true
@@ -2647,6 +2652,7 @@ export namespace Prisma {
     rooms?: true
     city?: true
     district?: true
+    street?: true
     petsAllowed?: true
     hasParking?: true
     imageUrl?: true
@@ -2764,6 +2770,7 @@ export namespace Prisma {
     rooms: number | null
     city: string | null
     district: string | null
+    street: string | null
     petsAllowed: boolean | null
     hasParking: boolean | null
     imageUrl: string | null
@@ -2813,6 +2820,7 @@ export namespace Prisma {
     rooms?: boolean
     city?: boolean
     district?: boolean
+    street?: boolean
     petsAllowed?: boolean
     hasParking?: boolean
     imageUrl?: boolean
@@ -2844,6 +2852,7 @@ export namespace Prisma {
     rooms?: boolean
     city?: boolean
     district?: boolean
+    street?: boolean
     petsAllowed?: boolean
     hasParking?: boolean
     imageUrl?: boolean
@@ -2875,6 +2884,7 @@ export namespace Prisma {
     rooms?: boolean
     city?: boolean
     district?: boolean
+    street?: boolean
     petsAllowed?: boolean
     hasParking?: boolean
     imageUrl?: boolean
@@ -2906,6 +2916,7 @@ export namespace Prisma {
     rooms?: boolean
     city?: boolean
     district?: boolean
+    street?: boolean
     petsAllowed?: boolean
     hasParking?: boolean
     imageUrl?: boolean
@@ -2923,7 +2934,7 @@ export namespace Prisma {
     profileId?: boolean
   }
 
-  export type ListingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "source" | "externalId" | "url" | "title" | "description" | "price" | "rentExtra" | "area" | "rooms" | "city" | "district" | "petsAllowed" | "hasParking" | "imageUrl" | "deposit" | "furnished" | "utilities" | "score" | "aiSummary" | "aiExtracted" | "status" | "rejectReason" | "hidden" | "favorite" | "scrapedAt" | "profileId", ExtArgs["result"]["listing"]>
+  export type ListingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "source" | "externalId" | "url" | "title" | "description" | "price" | "rentExtra" | "area" | "rooms" | "city" | "district" | "street" | "petsAllowed" | "hasParking" | "imageUrl" | "deposit" | "furnished" | "utilities" | "score" | "aiSummary" | "aiExtracted" | "status" | "rejectReason" | "hidden" | "favorite" | "scrapedAt" | "profileId", ExtArgs["result"]["listing"]>
   export type ListingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     profile?: boolean | SearchProfileDefaultArgs<ExtArgs>
   }
@@ -2952,6 +2963,7 @@ export namespace Prisma {
       rooms: number | null
       city: string | null
       district: string | null
+      street: string | null
       petsAllowed: boolean | null
       hasParking: boolean | null
       imageUrl: string | null
@@ -3403,6 +3415,7 @@ export namespace Prisma {
     readonly rooms: FieldRef<"Listing", 'Int'>
     readonly city: FieldRef<"Listing", 'String'>
     readonly district: FieldRef<"Listing", 'String'>
+    readonly street: FieldRef<"Listing", 'String'>
     readonly petsAllowed: FieldRef<"Listing", 'Boolean'>
     readonly hasParking: FieldRef<"Listing", 'Boolean'>
     readonly imageUrl: FieldRef<"Listing", 'String'>
@@ -4974,6 +4987,7 @@ export namespace Prisma {
     rooms: 'rooms',
     city: 'city',
     district: 'district',
+    street: 'street',
     petsAllowed: 'petsAllowed',
     hasParking: 'hasParking',
     imageUrl: 'imageUrl',
@@ -5213,6 +5227,7 @@ export namespace Prisma {
     rooms?: IntNullableFilter<"Listing"> | number | null
     city?: StringNullableFilter<"Listing"> | string | null
     district?: StringNullableFilter<"Listing"> | string | null
+    street?: StringNullableFilter<"Listing"> | string | null
     petsAllowed?: BoolNullableFilter<"Listing"> | boolean | null
     hasParking?: BoolNullableFilter<"Listing"> | boolean | null
     imageUrl?: StringNullableFilter<"Listing"> | string | null
@@ -5244,6 +5259,7 @@ export namespace Prisma {
     rooms?: SortOrderInput | SortOrder
     city?: SortOrderInput | SortOrder
     district?: SortOrderInput | SortOrder
+    street?: SortOrderInput | SortOrder
     petsAllowed?: SortOrderInput | SortOrder
     hasParking?: SortOrderInput | SortOrder
     imageUrl?: SortOrderInput | SortOrder
@@ -5279,6 +5295,7 @@ export namespace Prisma {
     rooms?: IntNullableFilter<"Listing"> | number | null
     city?: StringNullableFilter<"Listing"> | string | null
     district?: StringNullableFilter<"Listing"> | string | null
+    street?: StringNullableFilter<"Listing"> | string | null
     petsAllowed?: BoolNullableFilter<"Listing"> | boolean | null
     hasParking?: BoolNullableFilter<"Listing"> | boolean | null
     imageUrl?: StringNullableFilter<"Listing"> | string | null
@@ -5310,6 +5327,7 @@ export namespace Prisma {
     rooms?: SortOrderInput | SortOrder
     city?: SortOrderInput | SortOrder
     district?: SortOrderInput | SortOrder
+    street?: SortOrderInput | SortOrder
     petsAllowed?: SortOrderInput | SortOrder
     hasParking?: SortOrderInput | SortOrder
     imageUrl?: SortOrderInput | SortOrder
@@ -5348,6 +5366,7 @@ export namespace Prisma {
     rooms?: IntNullableWithAggregatesFilter<"Listing"> | number | null
     city?: StringNullableWithAggregatesFilter<"Listing"> | string | null
     district?: StringNullableWithAggregatesFilter<"Listing"> | string | null
+    street?: StringNullableWithAggregatesFilter<"Listing"> | string | null
     petsAllowed?: BoolNullableWithAggregatesFilter<"Listing"> | boolean | null
     hasParking?: BoolNullableWithAggregatesFilter<"Listing"> | boolean | null
     imageUrl?: StringNullableWithAggregatesFilter<"Listing"> | string | null
@@ -5610,6 +5629,7 @@ export namespace Prisma {
     rooms?: number | null
     city?: string | null
     district?: string | null
+    street?: string | null
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
@@ -5640,6 +5660,7 @@ export namespace Prisma {
     rooms?: number | null
     city?: string | null
     district?: string | null
+    street?: string | null
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
@@ -5670,6 +5691,7 @@ export namespace Prisma {
     rooms?: NullableIntFieldUpdateOperationsInput | number | null
     city?: NullableStringFieldUpdateOperationsInput | string | null
     district?: NullableStringFieldUpdateOperationsInput | string | null
+    street?: NullableStringFieldUpdateOperationsInput | string | null
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5700,6 +5722,7 @@ export namespace Prisma {
     rooms?: NullableIntFieldUpdateOperationsInput | number | null
     city?: NullableStringFieldUpdateOperationsInput | string | null
     district?: NullableStringFieldUpdateOperationsInput | string | null
+    street?: NullableStringFieldUpdateOperationsInput | string | null
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5730,6 +5753,7 @@ export namespace Prisma {
     rooms?: number | null
     city?: string | null
     district?: string | null
+    street?: string | null
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
@@ -5760,6 +5784,7 @@ export namespace Prisma {
     rooms?: NullableIntFieldUpdateOperationsInput | number | null
     city?: NullableStringFieldUpdateOperationsInput | string | null
     district?: NullableStringFieldUpdateOperationsInput | string | null
+    street?: NullableStringFieldUpdateOperationsInput | string | null
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5789,6 +5814,7 @@ export namespace Prisma {
     rooms?: NullableIntFieldUpdateOperationsInput | number | null
     city?: NullableStringFieldUpdateOperationsInput | string | null
     district?: NullableStringFieldUpdateOperationsInput | string | null
+    street?: NullableStringFieldUpdateOperationsInput | string | null
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6176,6 +6202,7 @@ export namespace Prisma {
     rooms?: SortOrder
     city?: SortOrder
     district?: SortOrder
+    street?: SortOrder
     petsAllowed?: SortOrder
     hasParking?: SortOrder
     imageUrl?: SortOrder
@@ -6216,6 +6243,7 @@ export namespace Prisma {
     rooms?: SortOrder
     city?: SortOrder
     district?: SortOrder
+    street?: SortOrder
     petsAllowed?: SortOrder
     hasParking?: SortOrder
     imageUrl?: SortOrder
@@ -6246,6 +6274,7 @@ export namespace Prisma {
     rooms?: SortOrder
     city?: SortOrder
     district?: SortOrder
+    street?: SortOrder
     petsAllowed?: SortOrder
     hasParking?: SortOrder
     imageUrl?: SortOrder
@@ -6775,6 +6804,7 @@ export namespace Prisma {
     rooms?: number | null
     city?: string | null
     district?: string | null
+    street?: string | null
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
@@ -6804,6 +6834,7 @@ export namespace Prisma {
     rooms?: number | null
     city?: string | null
     district?: string | null
+    street?: string | null
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
@@ -6890,6 +6921,7 @@ export namespace Prisma {
     rooms?: IntNullableFilter<"Listing"> | number | null
     city?: StringNullableFilter<"Listing"> | string | null
     district?: StringNullableFilter<"Listing"> | string | null
+    street?: StringNullableFilter<"Listing"> | string | null
     petsAllowed?: BoolNullableFilter<"Listing"> | boolean | null
     hasParking?: BoolNullableFilter<"Listing"> | boolean | null
     imageUrl?: StringNullableFilter<"Listing"> | string | null
@@ -7166,6 +7198,7 @@ export namespace Prisma {
     rooms?: number | null
     city?: string | null
     district?: string | null
+    street?: string | null
     petsAllowed?: boolean | null
     hasParking?: boolean | null
     imageUrl?: string | null
@@ -7205,6 +7238,7 @@ export namespace Prisma {
     rooms?: NullableIntFieldUpdateOperationsInput | number | null
     city?: NullableStringFieldUpdateOperationsInput | string | null
     district?: NullableStringFieldUpdateOperationsInput | string | null
+    street?: NullableStringFieldUpdateOperationsInput | string | null
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7234,6 +7268,7 @@ export namespace Prisma {
     rooms?: NullableIntFieldUpdateOperationsInput | number | null
     city?: NullableStringFieldUpdateOperationsInput | string | null
     district?: NullableStringFieldUpdateOperationsInput | string | null
+    street?: NullableStringFieldUpdateOperationsInput | string | null
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7263,6 +7298,7 @@ export namespace Prisma {
     rooms?: NullableIntFieldUpdateOperationsInput | number | null
     city?: NullableStringFieldUpdateOperationsInput | string | null
     district?: NullableStringFieldUpdateOperationsInput | string | null
+    street?: NullableStringFieldUpdateOperationsInput | string | null
     petsAllowed?: NullableBoolFieldUpdateOperationsInput | boolean | null
     hasParking?: NullableBoolFieldUpdateOperationsInput | boolean | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null

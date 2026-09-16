@@ -153,6 +153,7 @@ exports.Prisma.ListingScalarFieldEnum = {
   rooms: 'rooms',
   city: 'city',
   district: 'district',
+  street: 'street',
   petsAllowed: 'petsAllowed',
   hasParking: 'hasParking',
   imageUrl: 'imageUrl',

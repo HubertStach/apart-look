@@ -21,4 +21,12 @@
   --color-cocoa: #5f4d39; /* ciemny brąz — tekst główny */
   --color-mocha: #8b7355; /* przygaszony brąz — tekst pomocniczy */
   --color-linen: #e0d3bc; /* obramowania */
+
+  /* Akcenty statusowe dopasowane do palety „cozy” (zamiast surowych green/red Tailwinda) */
+  --color-sage: #7a8b5a; /* stonowana zieleń — pozytyw (dobre dopasowanie, „OK”) */
+  --color-sage-soft: #e7ebd8; /* tło jasnego badge’a pozytywnego */
+  --color-sage-deep: #4f5c37; /* tekst na jasnym badge’u pozytywnym */
+  --color-rust: #b56a4a; /* przygaszona terakota — negatyw/ostrzeżenie */
+  --color-rust-soft: #f0ddd3; /* tło jasnego badge’a negatywnego */
+  --color-rust-deep: #8a4a30; /* tekst na jasnym badge’u negatywnym */
 }

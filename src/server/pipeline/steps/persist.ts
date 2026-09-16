@@ -1,26 +1,40 @@
 import type { ListingCollection } from "../collection";
 import type { PipelineContext, PipelineStep, ScrapedListing } from "../types";
+import { extractStreetFromText } from "../text";
 import type { PrismaClient } from "../../../../generated/prisma";
 
+/**
+ * Zabezpieczenie kolumny INT (SQLite): kwoty pieniężne muszą być całkowite
+ * i mieścić się w rozsądnym zakresie [0, 100000]. Halucynacje AI lub śmieci ze
+ * scrapera (np. -1e15) inaczej wywalają `prisma.upsert` błędem przepełnienia INT.
+ */
+function safeMoney(v: number | null | undefined): number | null {
+  if (v == null || !Number.isFinite(v) || v < 0 || v > 100_000) return null;
+  return Math.round(v);
+}
+
 /** Buduje rekord DB z ogłoszenia (wspólne dla zapisu batch i strumieniowego). */
-export function buildListingData(l: ScrapedListing) {
+export function buildListingData(l: ScrapedListing, profileCity?: string) {
   const passed = !l.rejected;
   return {
     url: l.url,
     title: l.title,
     description: l.description ?? null,
-    price: l.price ?? null,
-    rentExtra: l.ai?.adminRent ?? l.rentExtra ?? null,
+    price: safeMoney(l.price ?? l.ai?.price),
+    rentExtra: safeMoney(l.ai?.adminRent ?? l.rentExtra),
     area: l.area ?? null,
     rooms: l.rooms ?? null,
-    city: l.city ?? null,
+    // Miasto zawsze konkretne: wynik scrapera, a gdy portal go nie podał —
+    // profilowe miasto (URL wyszukiwania był już zawężony do niego). Patrz PLAN pkt 1.
+    city: l.city ?? profileCity ?? null,
     district: l.ai?.district ?? l.district ?? null,
+    street: extractStreetFromText(`${l.title} ${l.description ?? ""}`) ?? l.ai?.street ?? null,
     petsAllowed: l.ai?.petsAllowed ?? l.petsAllowed ?? null,
     hasParking: l.ai?.hasParking ?? l.hasParking ?? null,
     imageUrl: l.imageUrl ?? null,
-    deposit: l.ai?.deposit ?? null,
+    deposit: safeMoney(l.ai?.deposit),
     furnished: l.ai?.furnished ?? null,
-    utilities: l.ai?.utilitiesCost ?? null,
+    utilities: safeMoney(l.ai?.utilitiesCost),
     score: l.score ?? null,
     aiSummary: l.ai?.summary ?? null,
     aiExtracted: l.ai ? JSON.stringify(l.ai) : null,
@@ -37,8 +51,9 @@ export async function persistListing(
   db: PrismaClient,
   profileId: string,
   l: ScrapedListing,
+  profileCity?: string,
 ): Promise<void> {
-  const data = buildListingData(l);
+  const data = buildListingData(l, profileCity);
   await db.listing.upsert({
     where: {
       profileId_source_externalId: {
@@ -67,7 +82,7 @@ export class PersistStep implements PipelineStep {
     let saved = 0;
 
     for (const l of col.all()) {
-      await persistListing(db, profile.id, l);
+      await persistListing(db, profile.id, l, profile.city);
       saved++;
     }
 

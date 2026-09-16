@@ -9,6 +9,7 @@ export function ListingList() {
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [includeHidden, setIncludeHidden] = useState(false);
 
+  const utils = api.useUtils();
   const listings = api.listing.list.useQuery({
     status: "PASSED",
     source,
@@ -16,6 +17,26 @@ export function ListingList() {
     includeHidden,
   });
   const rejected = api.listing.rejectedSummary.useQuery();
+
+  const clear = api.scrape.clear.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.listing.invalidate(),
+        utils.scrape.status.invalidate(),
+        utils.scrape.history.invalidate(),
+      ]);
+    },
+  });
+
+  const handleClear = () => {
+    if (
+      window.confirm(
+        "Usunąć wszystkie znalezione mieszkania i historię przebiegów? Profil zostanie zachowany.",
+      )
+    ) {
+      clear.mutate();
+    }
+  };
 
   return (
     <main className="flex flex-1 flex-col overflow-hidden bg-cream">
@@ -54,21 +75,33 @@ export function ListingList() {
           pokaż ukryte
         </label>
 
-        {rejected.data && rejected.data.total > 0 && (
-          <details className="relative ml-auto text-xs text-mocha">
-            <summary className="cursor-pointer">
-              odrzucono {rejected.data.total} ▸
-            </summary>
-            <ul className="absolute right-0 z-10 mt-1 w-64 rounded-md border border-linen bg-panel p-2 shadow-lg">
-              {rejected.data.byReason.slice(0, 12).map((r) => (
-                <li key={r.reason} className="flex justify-between gap-2 text-cocoa">
-                  <span className="truncate">{r.reason}</span>
-                  <span className="font-medium">{r.count}</span>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
+        <div className="ml-auto flex items-center gap-3">
+          {rejected.data && rejected.data.total > 0 && (
+            <details className="relative text-xs text-mocha">
+              <summary className="cursor-pointer">
+                odrzucono {rejected.data.total} ▸
+              </summary>
+              <ul className="absolute right-0 z-10 mt-1 w-64 rounded-md border border-linen bg-panel p-2 shadow-lg">
+                {rejected.data.byReason.slice(0, 12).map((r) => (
+                  <li key={r.reason} className="flex justify-between gap-2 text-cocoa">
+                    <span className="truncate">{r.reason}</span>
+                    <span className="font-medium">{r.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+
+          <button
+            onClick={handleClear}
+            disabled={clear.isPending}
+            title="Wyczyść znalezione mieszkania i historię przebiegów (profil zostaje)"
+            aria-label="Wyczyść wyniki"
+            className="rounded-md border border-linen px-2 py-1 text-xs text-mocha transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+          >
+            {clear.isPending ? "Czyszczę…" : "🗑 Wyczyść"}
+          </button>
+        </div>
       </div>
 
       {/* lista */}
@@ -83,7 +116,7 @@ export function ListingList() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {listings.data?.map((l) => (
               <ListingCard key={l.id} listing={l} />
             ))}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parsePrice, parseArea, parseRooms, normalizeText, looseEquals } from "./text";
+import { parsePrice, parseArea, parseRooms, normalizeText, looseEquals, extractAreaFromText, extractStreetFromText, formatLocation } from "./text";
 
 describe("parsePrice", () => {
   it("parsuje ceny z separatorami i walutą", () => {
@@ -31,6 +31,69 @@ describe("parseRooms", () => {
     expect(parseRooms("mieszkanie trzypokojowe")).toBe(3);
     expect(parseRooms(3)).toBe(3);
     expect(parseRooms("mieszkanie")).toBeUndefined();
+  });
+});
+
+describe("extractAreaFromText", () => {
+  it("wyłuskuje metraż z treści ogłoszenia", () => {
+    expect(extractAreaFromText("Ładne mieszkanie 45 m² w centrum")).toBe(45);
+    expect(extractAreaFromText("powierzchnia 52,5m2")).toBe(52.5);
+    expect(extractAreaFromText("ok. 38 mkw, 2 pokoje")).toBe(38);
+    expect(extractAreaFromText("mieszkanie 60 metrow")).toBe(60);
+  });
+
+  it("ignoruje trafienia bez jednostki powierzchni i wartości absurdalne", () => {
+    expect(extractAreaFromText("5 minut od centrum, cena 3000 zł")).toBeUndefined();
+    expect(extractAreaFromText("mieszkanie na 3 pokoje")).toBeUndefined();
+    expect(extractAreaFromText("")).toBeUndefined();
+    expect(extractAreaFromText(null)).toBeUndefined();
+  });
+
+  it("bierze pierwszy sensowny metraż", () => {
+    expect(extractAreaFromText("dom 120 m² na działce")).toBe(120);
+  });
+});
+
+describe("extractStreetFromText", () => {
+  it("wyłuskuje ulicę z różnymi przedrostkami i normalizuje zapis", () => {
+    expect(extractStreetFromText("Mieszkanie przy ul. Długa 12")).toBe("ul. Długa 12");
+    expect(extractStreetFromText("lokal na ulicy Marszałkowskiej")).toBe("ul. Marszałkowskiej");
+    expect(extractStreetFromText("al. Jana Pawła II 40")).toBe("al. Jana Pawła II 40");
+    expect(extractStreetFromText("os. Widok, blok 3")).toBe("os. Widok");
+    expect(extractStreetFromText("pl. Wolności 1")).toBe("pl. Wolności 1");
+    expect(extractStreetFromText("ul. 3 Maja")).toBe("ul. 3 Maja");
+  });
+
+  it("zachowuje numer domu (z literą) i ucina go dopiero na interpunkcji/markupie", () => {
+    expect(extractStreetFromText("ul. Krótka 5a")).toBe("ul. Krótka 5a");
+    expect(extractStreetFromText("ul. Długa 12, Kraków")).toBe("ul. Długa 12");
+    expect(extractStreetFromText("ul. Dominikanów 32</p>")).toBe("ul. Dominikanów 32");
+  });
+
+  it("zwraca undefined gdy brak ulicy", () => {
+    expect(extractStreetFromText("Przytulne mieszkanie w centrum")).toBeUndefined();
+    expect(extractStreetFromText("")).toBeUndefined();
+    expect(extractStreetFromText(null)).toBeUndefined();
+  });
+
+  it("kończy nazwę na znaku nowej linii i interpunkcji", () => {
+    expect(extractStreetFromText("ul. Długa\nPrzytulne mieszkanie w centrum")).toBe("ul. Długa");
+    expect(extractStreetFromText("ul. Długa, mieszkanie 2-pokojowe")).toBe("ul. Długa");
+    expect(extractStreetFromText("mieszkanie przy ul. Krótka. Blisko centrum")).toBe("ul. Krótka");
+    expect(extractStreetFromText("os. Widok: parking w cenie")).toBe("os. Widok");
+    expect(extractStreetFromText("al. Jana Pawła II\r\nblok B")).toBe("al. Jana Pawła II");
+    expect(extractStreetFromText("ul. Dominikanów 32</p>")).toBe("ul. Dominikanów 32");
+    expect(extractStreetFromText('ul. Długa" class="x')).toBe("ul. Długa");
+  });
+});
+
+describe("formatLocation", () => {
+  it("łączy dzielnicę i ulicę jako 'Dzielnica, ulica'", () => {
+    expect(formatLocation("Śródmieście", "ul. Długa")).toBe("Śródmieście, ul. Długa");
+    expect(formatLocation("Śródmieście", null)).toBe("Śródmieście");
+    expect(formatLocation(null, "ul. Długa")).toBe("ul. Długa");
+    expect(formatLocation(null, null)).toBeNull();
+    expect(formatLocation("  ", "")).toBeNull();
   });
 });
 

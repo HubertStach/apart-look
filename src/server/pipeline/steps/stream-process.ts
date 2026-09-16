@@ -1,5 +1,9 @@
 import type { ListingCollection } from "../collection";
-import { ollamaJson, isOllamaAvailable, resetOllamaHealth } from "../../ai/ollama";
+import {
+  analyzeWithFallback,
+  isAiAvailable,
+  resetAiHealth,
+} from "../../ai/provider";
 import {
   AI_SYSTEM_PROMPT,
   aiExtractionSchema,
@@ -28,8 +32,10 @@ import type { PipelineContext, PipelineStep, ScrapedListing } from "../types";
  * Ogłoszenia odrzucone we wcześniejszych krokach batch (Dedupe/HardFilter/PreScore)
  * są zapisywane na starcie (audyt „odrzucono N"), bez przechodzenia przez AI.
  *
- * concurrency 1 — lokalny model liczy sekwencyjnie; to też daje efekt
- * „mieszkanie po mieszkaniu" na tablicy.
+ * concurrency 1 — model liczy sekwencyjnie; to też daje efekt „mieszkanie po
+ * mieszkaniu" na tablicy. Providery AI (OpenRouter → Ollama) są dobierane PER RUN
+ * przez orkiestrator (`analyzeWithFallback`, patrz `ai/provider.ts`) — dopiero błąd
+ * w trakcie przebiegu przełącza resztę ofert na kolejny provider.
  */
 export class StreamProcessStep implements PipelineStep {
   readonly name = "Selekcja i zapis (na bieżąco)";
@@ -41,13 +47,13 @@ export class StreamProcessStep implements PipelineStep {
 
     // 1) Zapisz od razu ogłoszenia odrzucone wcześniej (poza AI) — audyt odrzuceń.
     for (const l of col.all()) {
-      if (l.rejected) await persistListing(db, profile.id, l);
+      if (l.rejected) await persistListing(db, profile.id, l, profile.city);
     }
 
-    resetOllamaHealth();
-    const aiAvailable = await isOllamaAvailable();
+    resetAiHealth();
+    const aiAvailable = await isAiAvailable();
     if (!aiAvailable) {
-      ctx.log("⚠ Ollama niedostępna — selekcja bez wzbogacenia AI.");
+      ctx.log("⚠ AI niedostępne (OpenRouter i Ollama) — selekcja bez wzbogacenia AI.");
     }
 
     const active = col.active();
@@ -59,11 +65,15 @@ export class StreamProcessStep implements PipelineStep {
 
       if (aiAvailable) {
         try {
-          l.ai = await ollamaJson({
-            system: AI_SYSTEM_PROMPT,
-            prompt: buildExtractionPrompt(l.title, l.description ?? ""),
-            schema: aiExtractionSchema,
-          });
+          l.ai = await analyzeWithFallback(
+            {
+              system: AI_SYSTEM_PROMPT,
+              prompt: buildExtractionPrompt(l.title, l.description ?? ""),
+              schema: aiExtractionSchema,
+            },
+            (provider, err) =>
+              ctx.log(`AI: ${provider} zawiódł (${String(err)}) — próba fallbacku.`),
+          );
         } catch (err) {
           ctx.log(`AI błąd dla ${l.url}: ${String(err)}`);
           l.ai = null;
@@ -81,7 +91,7 @@ export class StreamProcessStep implements PipelineStep {
         };
       }
 
-      await persistListing(db, profile.id, l);
+      await persistListing(db, profile.id, l, profile.city);
       saved++;
       processed++;
       // Raport postępu po każdym ogłoszeniu → UI odświeża listę na bieżąco.

@@ -8,21 +8,26 @@ export type ListingSource = "OLX" | "OTODOM";
  * (model nie znalazł informacji) — nigdy nie zmyślamy.
  */
 export interface AiExtraction {
-  petsAllowed: boolean | null;
-  hasParking: boolean | null;
   district: string | null;
+  /** Nazwa ulicy mieszkania, jeśli podana w opisie — inaczej null. */
+  street: string | null;
+  /** Cena najmu (główna kwota) wyłuskana z opisu przez AI — uzupełnia dane scrapera. */
+  price: number | null;
   deposit: number | null;
   adminRent: number | null;
   /** Koszt mediów (prąd/gaz/woda) w zł/mies. — dokładny lub przybliżony, jeśli podany. */
   utilitiesCost: number | null;
-  /** Elementy wyposażenia/mebli dosłownie wymienione w opisie (dowód dla `furnished`). */
-  furnishings: string[];
+  /** Czy zwierzęta są dozwolone (true), zabronione (false) czy brak wzmianki (null). */
+  petsAllowed: boolean | null;
+  /** Czy jest miejsce postojowe/garaż (true), brak (false) czy brak wzmianki (null). */
+  hasParking: boolean | null;
+  /** Czy mieszkanie jest umeblowane (true), nieumeblowane (false) czy brak wzmianki (null). */
   furnished: boolean | null;
   /** Czy to na pewno długoterminowy najem całego mieszkania (nie pokój/doba/sprzedaż). */
   isLongTermApartmentRental: boolean;
   /** Czy to wynajem pokoju w mieszkaniu współdzielonym z innymi lokatorami. */
   isRoomInSharedApartment: boolean;
-  /** Krótkie (2-3 zdania) podsumowanie po polsku. */
+  /** Rzeczowy opis po polsku (najważniejsze + poboczne fakty, biuro/prowizja). */
   summary: string;
 }
 

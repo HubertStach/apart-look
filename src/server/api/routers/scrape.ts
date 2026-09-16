@@ -96,4 +96,17 @@ export const scrapeRouter = createTRPCRouter({
       take: 10,
     });
   }),
+
+  /**
+   * Czyści dane aktywnego profilu: usuwa wszystkie znalezione mieszkania
+   * (Listing) i przebiegi (ScrapeRun). PROFIL i jego ustawienia zostają.
+   */
+  clear: publicProcedure.mutation(async ({ ctx }) => {
+    const profileId = await getActiveProfileId(ctx.db);
+    if (!profileId) return { listings: 0, runs: 0 };
+
+    const listings = await ctx.db.listing.deleteMany({ where: { profileId } });
+    const runs = await ctx.db.scrapeRun.deleteMany({ where: { profileId } });
+    return { listings: listings.count, runs: runs.count };
+  }),
 });

@@ -18,13 +18,13 @@ export function StarRating({ value, onChange, label }: StarRatingProps) {
           aria-pressed={star <= value}
           onClick={() => onChange(star === value ? 0 : star)}
           className={`text-lg leading-none transition-colors ${
-            star <= value ? "text-amber-500" : "text-slate-300 hover:text-amber-300"
+            star <= value ? "text-clay" : "text-linen hover:text-sand"
           }`}
         >
           ★
         </button>
       ))}
-      <span className="ml-1 w-4 text-xs text-slate-400">{value || "–"}</span>
+      <span className="ml-1 w-4 text-xs text-mocha/50">{value || "–"}</span>
     </div>
   );
 }

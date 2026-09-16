@@ -3,7 +3,9 @@ import { looseEquals } from "../text";
 import type { PipelineContext, PipelineStep } from "../types";
 
 /**
- * Twarde filtry z profilu: miasto, liczba pokoi, widełki ceny i powierzchni.
+ * Twarde filtry z profilu: miasto, liczba pokoi, widełki ceny.
+ * Powierzchnia jest filtrowana wcześniej w `AreaFilterStep` (z regexowym
+ * uzupełnieniem metrażu z treści) — jeszcze przed krokami AI.
  *
  * Zasada: BRAKUJĄCA wartość (undefined) NIE odrzuca oferty — przechodzi dalej,
  * bo AI może wyłuskać dane z opisu. Odrzucamy tylko przy jednoznacznej
@@ -21,6 +23,14 @@ export class HardFilterStep implements PipelineStep {
       (l) => l.city == null || looseEquals(l.city, profile.city),
       (l) => `miasto (${l.city ?? "?"} ≠ ${profile.city})`,
     );
+
+    // Normalizacja: oferty bez nazwy miasta przyjmują miasto z profilu.
+    // URL wyszukiwania (OLX city_id / Otodom slug) był już zawężony do tego
+    // miasta, więc brak nazwy = to samo miasto — nie inne. Dzięki temu karta
+    // i mapka zawsze wskazują konkretne, jedno miasto (PLAN pkt 1).
+    for (const l of col.active()) {
+      l.city ??= profile.city;
+    }
 
     // liczba pokoi — jeśli scraper podał, musi się zgadzać dokładnie
     col.reject(
@@ -47,23 +57,8 @@ export class HardFilterStep implements PipelineStep {
       );
     }
 
-    // powierzchnia — twarde widełki, jeśli oferta ma powierzchnię
-    if (profile.areaMin != null) {
-      const min = profile.areaMin;
-      col.reject(
-        this.name,
-        (l) => l.area == null || l.area >= min,
-        (l) => `powierzchnia < ${min} (${l.area} m²)`,
-      );
-    }
-    if (profile.areaMax != null) {
-      const max = profile.areaMax;
-      col.reject(
-        this.name,
-        (l) => l.area == null || l.area <= max,
-        (l) => `powierzchnia > ${max} (${l.area} m²)`,
-      );
-    }
+    // Powierzchnia jest filtrowana osobno w AreaFilterStep (z uzupełnieniem
+    // metrażu z treści przez regex) — PRZED krokami AI.
 
     return Promise.resolve(col);
   }

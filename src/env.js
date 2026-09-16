@@ -11,9 +11,14 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    // Ollama (lokalny model AI)
+    // Ollama (lokalny model AI — fallback)
     OLLAMA_URL: z.string().url().default("http://localhost:11434"),
     OLLAMA_MODEL: z.string().default("gemma4:e2b"),
+    // OpenRouter (zdalny model AI — primary dla całego przebiegu, patrz provider.ts)
+    // Brak OPENROUTER_API_KEY => OpenRouter niedostępny, używana tylko Ollama.
+    OPENROUTER_API_KEY: z.string().optional(),
+    OPENROUTER_MODEL: z.string().default("nex-agi/nex-n2.5-mini:free"),
+    OPENROUTER_URL: z.string().url().default("https://openrouter.ai/api/v1"),
     // Harmonogram scrapowania (cron); pusty = wyłączony
     SCRAPE_CRON: z.string().optional(),
     // Limit stron pobieranych z każdego portalu na jeden przebieg
@@ -43,6 +48,9 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     OLLAMA_URL: process.env.OLLAMA_URL,
     OLLAMA_MODEL: process.env.OLLAMA_MODEL,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
+    OPENROUTER_URL: process.env.OPENROUTER_URL,
     SCRAPE_CRON: process.env.SCRAPE_CRON,
     SCRAPE_MAX_PAGES: process.env.SCRAPE_MAX_PAGES,
     SCRAPE_ENGINE: process.env.SCRAPE_ENGINE,

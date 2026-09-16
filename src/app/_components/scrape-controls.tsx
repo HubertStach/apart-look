@@ -101,7 +101,7 @@ export function ScrapeControls({ hasProfile }: { hasProfile: boolean }) {
             </>
           )}
           {run.status === "DONE" && (
-            <span className="text-green-700">
+            <span className="text-sage-deep">
               ✓ Znaleziono {run.stats.passed ?? 0}, odrzucono {run.stats.rejected ?? 0}
             </span>
           )}

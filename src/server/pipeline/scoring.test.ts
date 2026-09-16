@@ -60,11 +60,12 @@ describe("computeScore", () => {
     expect(computeScore(makeListing({ area: 30 }), profile)).toBe(0);
   });
 
-  it("dzielnica preferowana = 1, obca = 0, nieznana = 0.4", () => {
+  it("dzielnica preferowana = 1, obca = 0, nieznana = neutralna (pomijana)", () => {
     const profile = makeProfile({ districts: '["Centrum","Podgórze"]', districtWeight: 5 });
     expect(computeScore(makeListing({ district: "Centrum" }), profile)).toBe(1);
     expect(computeScore(makeListing({ district: "Nowa Huta" }), profile)).toBe(0);
-    expect(computeScore(makeListing({ district: undefined }), profile)).toBeCloseTo(0.4, 5);
+    // nieznana dzielnica → jedyny czynnik z wagą jest pomijany → suma wag 0 → 1
+    expect(computeScore(makeListing({ district: undefined }), profile)).toBe(1);
   });
 
   it("dopasowanie dzielnicy ignoruje diakrytyki", () => {
@@ -72,18 +73,53 @@ describe("computeScore", () => {
     expect(computeScore(makeListing({ district: "Podgórze" }), profile)).toBe(1);
   });
 
-  it("zwierzęta: dane AI mają pierwszeństwo", () => {
+  it("cena: przy samym priceMax budżet=mocny match, taniej=wyższy, poza budżetem=0", () => {
+    const profile = makeProfile({ priceMax: 4000, priceWeight: 5 });
+    const cheap = computeScore(makeListing({ price: 1000 }), profile);
+    const mid = computeScore(makeListing({ price: 2000 }), profile);
+    const nearMax = computeScore(makeListing({ price: 3800 }), profile);
+    expect(cheap).toBeGreaterThan(mid);
+    expect(mid).toBeGreaterThan(nearMax);
+    // spełniony budżet nie spada poniżej progu bazowego 0.7 (realne oferty przechodzą pre-score)
+    expect(nearMax).toBeGreaterThanOrEqual(0.7);
+    expect(mid).toBeCloseTo(0.7 + 0.3 * ((4000 - 2000) / 4000), 5); // 0.85
+    expect(computeScore(makeListing({ price: 5000 }), profile)).toBe(0); // poza budżetem
+  });
+
+  it("powierzchnia: przy samym areaMin metraż=mocny match, więcej=wyższy, poniżej=0", () => {
+    const profile = makeProfile({ areaMin: 40, areaWeight: 5 });
+    const small = computeScore(makeListing({ area: 45 }), profile);
+    const big = computeScore(makeListing({ area: 75 }), profile);
+    expect(big).toBeGreaterThan(small);
+    expect(small).toBeGreaterThanOrEqual(0.7); // spełniony metraż nie leci poniżej progu bazowego
+    expect(computeScore(makeListing({ area: 60 }), profile)).toBeCloseTo(0.7 + 0.3 * ((60 - 40) / 40), 5); // 0.85
+    expect(computeScore(makeListing({ area: 80 }), profile)).toBe(1); // ≥ 2×min → nasycenie
+    expect(computeScore(makeListing({ area: 30 }), profile)).toBe(0); // poniżej min
+  });
+
+  it("realny profil (sam priceMax + areaMin) NIE odrzuca ofert w budżecie", () => {
+    // Regresja: kawalerka 2400 zł / 25 m² przy budżecie 2500, areaMin 20 musi
+    // przekroczyć próg pre-score 0.6 (wcześniej skalowanie od zera dawało ~0.04).
+    const profile = makeProfile({
+      priceMax: 2500, priceWeight: 5, areaMin: 20, areaWeight: 3,
+    });
+    expect(computeScore(makeListing({ price: 2400, area: 25 }), profile)).toBeGreaterThan(0.6);
+    expect(computeScore(makeListing({ price: 2500, area: 20 }), profile)).toBeGreaterThan(0.6);
+  });
+
+  it("zwierzęta: dane scrapera działają, gdy AI ich nie wyłuskała", () => {
     const profile = makeProfile({ petsRequired: true, petsWeight: 5 });
     const listing = makeListing({
-      petsAllowed: false,
+      petsAllowed: true,
       ai: {
-        petsAllowed: true,
-        hasParking: null,
         district: null,
+        street: null,
+        price: null,
         deposit: null,
         adminRent: null,
         utilitiesCost: null,
-        furnishings: [],
+        petsAllowed: null,
+        hasParking: null,
         furnished: null,
         isLongTermApartmentRental: true,
         isRoomInSharedApartment: false,
@@ -91,6 +127,29 @@ describe("computeScore", () => {
       },
     });
     expect(computeScore(listing, profile)).toBe(1);
+  });
+
+  it("zwierzęta/parking: dane AI mają pierwszeństwo nad scraperem", () => {
+    const petsProfile = makeProfile({ petsRequired: true, petsWeight: 5 });
+    const ai = {
+      district: null,
+      street: null,
+      price: null,
+      deposit: null,
+      adminRent: null,
+      utilitiesCost: null,
+      petsAllowed: false, // AI: bez zwierząt
+      hasParking: true,
+      furnished: null,
+      isLongTermApartmentRental: true,
+      isRoomInSharedApartment: false,
+      summary: "",
+    };
+    // scraper twierdził petsAllowed=true, ale AI (false) wygrywa → 0
+    expect(computeScore(makeListing({ petsAllowed: true, ai }), petsProfile)).toBe(0);
+
+    const parkingProfile = makeProfile({ parkingRequired: true, parkingWeight: 5 });
+    expect(computeScore(makeListing({ ai }), parkingProfile)).toBe(1); // AI: parking jest
   });
 
   it("średnia ważona łączy kilka preferencji", () => {

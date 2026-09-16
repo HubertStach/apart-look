@@ -3,6 +3,7 @@ import { ListingPipeline } from "./pipeline";
 import type { PipelineStats } from "./types";
 import { DedupeStep } from "./steps/dedupe";
 import { HardFilterStep } from "./steps/hard-filter";
+import { AreaFilterStep } from "./steps/area-filter";
 import { PreScoreStep } from "./steps/pre-score";
 import { StreamProcessStep } from "./steps/stream-process";
 import { MockScrapeStep } from "./steps/mock-scrape";
@@ -35,6 +36,9 @@ export function buildDefaultPipeline(
   pipeline
     .use(new DedupeStep())
     .use(new HardFilterStep())
+    // Filtr powierzchni PRZED AI: uzupełnia brakujący metraż z treści (regex)
+    // i odrzuca oferty poza widełkami, zanim trafią do drogich kroków AI.
+    .use(new AreaFilterStep())
     .use(new PreScoreStep(threshold))
     // Strumieniowy ogon: dla każdego ogłoszenia po kolei robi AI + selekcję
     // i NATYCHMIAST zapisuje wynik → mieszkania pojawiają się na bieżąco.
