@@ -83,27 +83,45 @@ export function extractAreaFromText(input: string | null | undefined): number | 
 }
 
 /**
+ * Skróty tytularne, które w nazwie ulicy POPRZEDZAJĄ właściwą nazwę i mają kropkę,
+ * np. "ul. św. Filipa", "al. gen. Andersa", "ul. ks. Popiełuszki". Bez tej listy
+ * regex urywał nazwę na kropce skrótu (klasa znaków nazwy wyklucza `.`), gubiąc
+ * resztę ("ul. św. Filipa" → "ul. św"). Lista zamknięta (nie dowolny wyraz+kropka),
+ * żeby kropka KOŃCZĄCA ZDANIE po zwykłej nazwie ("ul. Krótka. Blisko") nadal
+ * kończyła nazwę. Dopuszczamy wariant z wielką literą pierwszej litery.
+ */
+const STREET_ABBRS = [
+  "św", "ks", "bł", "gen", "płk", "ppłk", "mjr", "kpt", "por", "ppor",
+  "kmdr", "marsz", "abp", "bp", "kard", "prof", "dr", "inż", "hr", "im", "o",
+];
+const abbrAlt = STREET_ABBRS.map((a) => `[${a[0]}${a[0]!.toUpperCase()}]${a.slice(1)}`).join("|");
+const ABBR = `(?:${abbrAlt})\\.`;
+const NAME_WORD = `[A-ZŻŹĆĄŚĘŁÓŃ0-9][^\\s,.;:!?/()<>"']*`;
+const STREET_PREFIX = `\\b(ul|ulica|ulicy|al|aleja|aleje|alei|os|osiedle|osiedla|pl|plac)\\b\\.?`;
+// Nazwa = opcjonalne skróty tytularne (św./ks./gen.) + wyraz właściwy + do 5
+// kolejnych tokenów (wyraz / liczba rzymska / kolejny skrót / numer domu).
+const STREET_RE = new RegExp(
+  `${STREET_PREFIX}[ \\t]+((?:${ABBR}[ \\t]+)*${NAME_WORD}(?:[ \\t]+(?:${NAME_WORD}|[IVX]+|${ABBR})){0,5})`,
+);
+
+/**
  * Wyszukuje ulicę/aleję/osiedle/plac w treści (tytuł + opis) za pomocą REGEX.
  * Działa na ORYGINALNYM tekście (zachowuje wielkość liter nazwy). Dopasowuje
  * przedrostek ("ul.", "ulica", "al.", "aleja", "os.", "osiedle", "pl.", "plac")
- * i 1–4 kolejne wyrazy nazwy (wielka litera / cyfra / liczba rzymska) wraz z
- * ewentualnym numerem domu, np. "ul. Długa 12", "al. Jana Pawła II 40",
- * "os. Widok", "ul. 3 Maja".
+ * i kolejne wyrazy nazwy (wielka litera / cyfra / liczba rzymska), w tym SKRÓTY
+ * TYTULARNE z kropką ("ul. św. Filipa 5", "al. gen. Andersa 12"), wraz z
+ * ewentualnym numerem domu, np. "ul. Długa 12", "al. Jana Pawła II 40".
  *
- * Nazwę kończy: znak nowej linii, spacja przechodząca w koniec/interpunkcję oraz
- * znaki `, . ; : ! ? / ( ) < > " '` (m.in. markup HTML). Łącznik między wyrazami
- * to tylko spacja/tabulator (`[ \t]`), więc newline NIE zlewa nazwy z następną linią.
- * Zwraca znormalizowany zapis z krótkim przedrostkiem i — gdy podany — numerem
- * domu (np. "ul. Długa 12"), inaczej undefined. Numer domu ZACHOWUJEMY, bo
- * uściśla geokodowanie (Nominatim, zapytanie strukturalne w geo.ts).
+ * Kropka skrótu (św./ks./gen. — lista `STREET_ABBRS`) NIE kończy nazwy; kropka po
+ * zwykłym wyrazie ("ul. Krótka. Blisko") — kończy. Nazwę kończą też: nowa linia,
+ * interpunkcja i znaki `, ; : ! ? / ( ) < > " '` (markup HTML). Łącznik między
+ * wyrazami to tylko spacja/tabulator, więc newline nie zlewa nazwy z następną linią.
+ * Zwraca zapis z krótkim przedrostkiem i — gdy podany — numerem domu, inaczej
+ * undefined. Numer domu ZACHOWUJEMY (uściśla geokodowanie strukturalne w geo.ts).
  */
 export function extractStreetFromText(input: string | null | undefined): string | undefined {
   if (!input) return undefined;
-  // {0,3} (a nie {0,2}) — dodatkowy token mieści końcowy numer domu przy dłuższych
-  // nazwach ("al. Jana Pawła II 40"), którego wcześniej nie obejmowaliśmy.
-  const re =
-    /\b(ul|ulica|ulicy|al|aleja|aleje|alei|os|osiedle|osiedla|pl|plac)\b\.?[ \t]+([A-ZŻŹĆĄŚĘŁÓŃ0-9][^\s,.;:!?/()<>"']*(?:[ \t]+(?:[A-ZŻŹĆĄŚĘŁÓŃ0-9][^\s,.;:!?/()<>"']*|[IVX]+)){0,3})/;
-  const m = re.exec(input);
+  const m = STREET_RE.exec(input);
   if (!m) return undefined;
 
   const prefixMap: Record<string, string> = {
@@ -126,6 +144,58 @@ export function extractStreetFromText(input: string | null | undefined): string 
   const name = m[2]!.replace(/[.,;:!?/)<>"']+$/, "").trim();
   if (!name) return undefined;
   return `${prefix} ${name}`;
+}
+
+/**
+ * Końcówki żeńskich nazw przymiotnikowych w formie odmienionej (dopełniacz/
+ * miejscownik "-ej") → mianownik. Kolejność od NAJBARDZIEJ szczegółowej, bo
+ * regexy są sprawdzane po kolei (skiej przed kiej przed ej).
+ */
+const NOMINATIVE_SUFFIXES: [RegExp, string][] = [
+  [/skiej$/, "ska"],
+  [/ckiej$/, "cka"],
+  [/dzkiej$/, "dzka"],
+  [/giej$/, "ga"],
+  [/kiej$/, "ka"],
+  [/owej$/, "owa"],
+  [/nej$/, "na"],
+  [/łej$/, "ła"],
+  [/rej$/, "ra"],
+  [/wej$/, "wa"],
+  [/iej$/, "ia"],
+  [/ej$/, "a"],
+];
+
+/**
+ * Sprowadza odmienioną nazwę ulicy do mianownika: "ul. Mogilskiej 70" →
+ * "ul. Mogilska 70", "ul. Długiej" → "ul. Długa". Konserwatywnie — działa TYLKO
+ * dla JEDNOWYRAZOWEJ nazwy przymiotnikowej z końcówką "-ej" (żeńskie ulice typu
+ * Mogilska/Długa/Krótka). Nazwy WIELOWYRAZOWE zostawia bez zmian, bo to zwykle
+ * dopełniacz od nazwiska, który MA zostać odmieniony ("ul. Jana Kilińskiego",
+ * "al. Jana Pawła II"). Idempotentna: mianownik ("Mogilska") nie ma "-ej", więc
+ * nie jest ruszany — bezpieczna też dla poprawnych danych z AI.
+ */
+export function toNominativeStreet(street: string | null | undefined): string | undefined {
+  if (!street) return street ?? undefined;
+  const m = /^(ul\.|al\.|os\.|pl\.)\s+(.+)$/.exec(street.trim());
+  if (!m) return street;
+  const prefix = m[1]!;
+  const rest = m[2]!;
+  // Oddziel końcowy numer domu ("70", "5a"), by go zachować bez zmian.
+  const numMatch = /\s+(\d+[a-zA-Z]?)$/.exec(rest);
+  const num = numMatch ? numMatch[0] : "";
+  const core = (num ? rest.slice(0, rest.length - num.length) : rest).trim();
+  // Tylko jednowyrazowa nazwa (bez spacji) — wielowyrazowa = dopełniacz nazwiska.
+  if (/\s/.test(core)) return street;
+  // Nazwa własna z wielkiej litery i sensownej długości (unikamy krótkich śmieci).
+  if (core.length <= 4 || !/^[A-ZŻŹĆĄŚĘŁÓŃ]/.test(core)) return street;
+  for (const [re, repl] of NOMINATIVE_SUFFIXES) {
+    if (re.test(core)) {
+      const nominative = core.replace(re, repl);
+      return `${prefix} ${nominative}${num}`;
+    }
+  }
+  return street;
 }
 
 /**

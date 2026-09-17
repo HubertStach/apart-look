@@ -93,9 +93,17 @@ nadrzędna: brak wzmianki → null. Nigdy nie zgaduj — jeśli ogłoszenie milc
 - hasParking: true, gdy jest miejsce postojowe / garaż / parking (w cenie lub za dopłatą —
   "miejsce postojowe", "garaż", "parking podziemny", "miejsce w hali"). false, gdy WPROST
   zaznaczono brak ("bez miejsca postojowego", "brak parkingu"). Brak wzmianki → null.
-- furnished: true, gdy mieszkanie jest umeblowane ("umeblowane", "w pełni wyposażone",
-  "z meblami", "po umeblowaniu"). false, gdy WPROST nieumeblowane ("bez mebli", "nieumeblowane",
-  "do własnej aranżacji", "puste"). Brak wzmianki → null.
+- furnished: true, gdy CAŁE mieszkanie jest umeblowane ("umeblowane", "w pełni
+  wyposażone", "z meblami", "po umeblowaniu"). false TYLKO gdy tekst jednoznacznie
+  stwierdza, że CAŁE mieszkanie jest nieumeblowane ("mieszkanie nieumeblowane",
+  "bez mebli", "do własnej aranżacji/wyposażenia" o całości). NIE ustawiaj false
+  na podstawie: częściowego braku ("kuchnia bez zabudowy", "bez pralki", "bez
+  mebli kuchennych" — to fragment, nie całość → jeśli reszta umeblowana: true,
+  inaczej null), słów o wielu znaczeniach ("puste ściany", "pusty pokój na
+  zdjęciach" — to NIE o meblach → null), ani wariantu/opcji ("można bez mebli",
+  "umeblujemy wg życzenia" — to nie stan zastany → null). Przy JAKIEJKOLWIEK
+  niepewności co do umeblowania → null, nigdy false. false = mocne, jednoznaczne
+  stwierdzenie o całym mieszkaniu.
 
 PRIORYTET 5 — OPIS (summary). Stwórz zwięzłe, rzeczowe PODSUMOWANIE CECH mieszkania i jego
 LOKALIZACJI po polsku — same fakty z ogłoszenia, w naturalnych zdaniach (nie lista).

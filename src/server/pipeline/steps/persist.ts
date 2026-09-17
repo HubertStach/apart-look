@@ -1,6 +1,6 @@
 import type { ListingCollection } from "../collection";
 import type { PipelineContext, PipelineStep, ScrapedListing } from "../types";
-import { extractStreetFromText } from "../text";
+import { extractStreetFromText, toNominativeStreet } from "../text";
 import type { PrismaClient } from "../../../../generated/prisma";
 
 /**
@@ -28,7 +28,11 @@ export function buildListingData(l: ScrapedListing, profileCity?: string) {
     // profilowe miasto (URL wyszukiwania był już zawężony do niego). Patrz PLAN pkt 1.
     city: l.city ?? profileCity ?? null,
     district: l.ai?.district ?? l.district ?? null,
-    street: extractStreetFromText(`${l.title} ${l.description ?? ""}`) ?? l.ai?.street ?? null,
+    // Ulica: regex z treści wykrywa obecność, AI daje formę mianownikową. Bierzemy
+    // regex (pewniejsze wykrycie w tekście), ale sprowadzamy do mianownika
+    // (toNominativeStreet: "Mogilskiej 70" → "Mogilska 70"); gdy regex nic nie znajdzie
+    // — ulica z AI (już w mianowniku z promptu). Patrz PLAN pkt 2 (ścieżka A).
+    street: toNominativeStreet(extractStreetFromText(`${l.title} ${l.description ?? ""}`)) ?? l.ai?.street ?? null,
     petsAllowed: l.ai?.petsAllowed ?? l.petsAllowed ?? null,
     hasParking: l.ai?.hasParking ?? l.hasParking ?? null,
     imageUrl: l.imageUrl ?? null,

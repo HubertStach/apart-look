@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parsePrice, parseArea, parseRooms, normalizeText, looseEquals, extractAreaFromText, extractStreetFromText, formatLocation } from "./text";
+import { parsePrice, parseArea, parseRooms, normalizeText, looseEquals, extractAreaFromText, extractStreetFromText, toNominativeStreet, formatLocation } from "./text";
 
 describe("parsePrice", () => {
   it("parsuje ceny z separatorami i walutą", () => {
@@ -84,6 +84,46 @@ describe("extractStreetFromText", () => {
     expect(extractStreetFromText("al. Jana Pawła II\r\nblok B")).toBe("al. Jana Pawła II");
     expect(extractStreetFromText("ul. Dominikanów 32</p>")).toBe("ul. Dominikanów 32");
     expect(extractStreetFromText('ul. Długa" class="x')).toBe("ul. Długa");
+  });
+
+  it("zachowuje kropki w skrótach tytularnych (św., ks., gen.)", () => {
+    expect(extractStreetFromText("Mieszkanie przy ul. św. Filipa 5")).toBe("ul. św. Filipa 5");
+    expect(extractStreetFromText("ul. ks. Józefa Popiełuszki 3")).toBe("ul. ks. Józefa Popiełuszki 3");
+    expect(extractStreetFromText("al. gen. Andersa 12")).toBe("al. gen. Andersa 12");
+    expect(extractStreetFromText("ul. bł. Jadwigi")).toBe("ul. bł. Jadwigi");
+  });
+
+  it("kropka skrótu nie łamie zwykłego terminatora zdania", () => {
+    // kropka po zwykłej nazwie (nie skrót) nadal kończy nazwę
+    expect(extractStreetFromText("mieszkanie przy ul. Krótka. Blisko centrum")).toBe("ul. Krótka");
+    expect(extractStreetFromText("ul. Długa. Idealna lokalizacja")).toBe("ul. Długa");
+  });
+});
+
+describe("toNominativeStreet", () => {
+  it("sprowadza żeńskie nazwy przymiotnikowe do mianownika", () => {
+    expect(toNominativeStreet("ul. Mogilskiej 70")).toBe("ul. Mogilska 70");
+    expect(toNominativeStreet("ul. Długiej")).toBe("ul. Długa");
+    expect(toNominativeStreet("ul. Marszałkowskiej")).toBe("ul. Marszałkowska");
+    expect(toNominativeStreet("ul. Krótkiej 5a")).toBe("ul. Krótka 5a");
+    expect(toNominativeStreet("al. Słonecznej")).toBe("al. Słoneczna");
+  });
+
+  it("jest idempotentna — mianownik zostaje bez zmian", () => {
+    expect(toNominativeStreet("ul. Mogilska 70")).toBe("ul. Mogilska 70");
+    expect(toNominativeStreet("ul. Długa")).toBe("ul. Długa");
+  });
+
+  it("NIE rusza wielowyrazowych nazw (dopełniacz od nazwiska)", () => {
+    expect(toNominativeStreet("ul. Jana Kilińskiego")).toBe("ul. Jana Kilińskiego");
+    expect(toNominativeStreet("al. Jana Pawła II 40")).toBe("al. Jana Pawła II 40");
+    expect(toNominativeStreet("ul. św. Filipa 5")).toBe("ul. św. Filipa 5");
+  });
+
+  it("obsługuje brak/pusty wejściowy", () => {
+    expect(toNominativeStreet(null)).toBeUndefined();
+    expect(toNominativeStreet(undefined)).toBeUndefined();
+    expect(toNominativeStreet("")).toBe("");
   });
 });
 
