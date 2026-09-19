@@ -50,6 +50,10 @@ async function geocode(street: string, city?: string | null): Promise<GeoResult 
     .trim();
   if (!cleanedStreet) return null;
   const cityTerm = (city ?? "").trim() === "null" ? "" : (city ?? "").trim();
+  // Miasto OBOWIĄZKOWE: bez niego Nominatim trafiał w ulicę o tej samej nazwie
+  // w innym mieście PL. Profil zawsze ma city (required), a persist je uzupełnia,
+  // więc brak city = dane niekompletne → nie geokoduj (lepiej brak mapy niż zła).
+  if (!cityTerm) return null;
 
   const key = `${cleanedStreet}|${cityTerm}`.toLowerCase();
   if (cache.has(key)) return cache.get(key)!;

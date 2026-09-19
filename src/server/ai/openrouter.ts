@@ -26,10 +26,10 @@ export class OpenRouterProvider implements AiProvider {
   readonly name = "OpenRouter";
   private available: boolean | null = null;
 
-  /** Dostępny, gdy skonfigurowano klucz API. */
+  /** Dostępny, gdy skonfigurowano klucz API i nazwę modelu. */
   isAvailable(): Promise<boolean> {
     if (this.available !== null) return Promise.resolve(this.available);
-    this.available = !!env.OPENROUTER_API_KEY;
+    this.available = !!env.OPENROUTER_API_KEY && !!env.OPENROUTER_MODEL;
     return Promise.resolve(this.available);
   }
 
@@ -42,11 +42,15 @@ export class OpenRouterProvider implements AiProvider {
     if (!apiKey) {
       throw new AiProviderError("Brak OPENROUTER_API_KEY", this.name);
     }
+    const model = env.OPENROUTER_MODEL;
+    if (!model) {
+      throw new AiProviderError("Brak OPENROUTER_MODEL (ustaw w .env)", this.name);
+    }
     const retries = opts.retries ?? 1;
     const jsonSchema = zodToJsonSchema(opts.schema, { target: "openApi3" });
 
     const body = {
-      model: env.OPENROUTER_MODEL,
+      model,
       temperature: 0,
       stream: false,
       messages: [

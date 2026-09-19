@@ -247,7 +247,11 @@ obu backendów. Kwoty pieniężne są sanityzowane (`moneyField`: [0, 100000], r
 
 Konfiguracja: `OLLAMA_URL`, `OLLAMA_MODEL` (wymaga `ollama pull <model>`);
 `OPENROUTER_API_KEY` (opcjonalny, brak = OpenRouter niedostępny),
-`OPENROUTER_MODEL` (domyślnie `nex-agi/nex-n2.5-mini:free`), `OPENROUTER_URL`.
+`OPENROUTER_MODEL` (opcjonalny — wymagany dopiero, gdy OpenRouter włączony), `OPENROUTER_URL`.
+**Nazwa modelu jest wskazywana WYŁĄCZNIE w `.env`** (`OLLAMA_MODEL` /
+`OPENROUTER_MODEL`) — `env.js` NIE ma zaszytych wartości domyślnych modeli
+(`OLLAMA_MODEL` = `z.string().min(1)` wymagany; `OPENROUTER_MODEL` optional z
+guardem w `openrouter.ts`). Zmiana modelu = zmiana jednej linii w `.env`.
 
 ---
 
