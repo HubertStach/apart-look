@@ -66,9 +66,14 @@ działanie całego pipeline'u na przykładowych danych.
 |---|---|---|
 | `DATABASE_URL` | ścieżka SQLite | `file:./db.sqlite` |
 | `OLLAMA_URL` | adres Ollamy | `http://localhost:11434` |
-| `OLLAMA_MODEL` | model do ekstrakcji | `gemma4:e2b` |
+| `OLLAMA_MODEL` | model do ekstrakcji (**wymagany — jedyne miejsce, bez domyślnej w kodzie**) | — |
+| `OPENROUTER_API_KEY` | klucz OpenRouter (opcjonalny; brak = tylko Ollama) | — |
+| `OPENROUTER_MODEL` | model OpenRouter (wymagany, gdy OpenRouter włączony) | — |
 | `SCRAPE_CRON` | harmonogram (cron); pusty = wyłączony | — |
 | `SCRAPE_MAX_PAGES` | limit stron na portal / przebieg | `3` |
+
+Model AI wskazujesz **wyłącznie** w `.env` (`OLLAMA_MODEL` / `OPENROUTER_MODEL`) —
+kod nie ma zaszytych nazw modeli.
 
 ## Skrypty
 
