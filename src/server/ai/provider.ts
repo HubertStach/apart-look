@@ -102,6 +102,11 @@ export async function analyzeWithFallback<T>(
   opts: AiJsonOptions<T>,
   onFallback?: (provider: string, err: unknown) => void,
 ): Promise<T> {
+  if (process.env.AI_DEBUG_PROMPT === "true") {
+    console.log(
+      `\n=== AI PROMPT ===\n[system]\n${opts.system}\n\n[user]\n${opts.prompt}\n=== END AI PROMPT ===\n`,
+    );
+  }
   let lastErr: unknown;
   for (let i = stickyIndex; i < PROVIDERS.length; i++) {
     const provider = PROVIDERS[i]!;
@@ -116,7 +121,11 @@ export async function analyzeWithFallback<T>(
       onFallback?.(provider.name, err);
       // Sticky: provider na bieżącym stickyIndex zawiódł -> na resztę przebiegu
       // kolejne oferty pomijają go i zaczynają od następnego w kolejności.
-      if (i === stickyIndex) stickyIndex = i + 1;
+      // NIE przesuwaj poza ostatniego providera: bez tego jedno nieudane
+      // wywołanie (np. timeout na pierwszej, „zimnej" ofercie) wyłączało AI na
+      // CAŁY przebieg — pętla startowała od indeksu poza zakresem i każda kolejna
+      // oferta dostawała `ai = null` bez próby.
+      if (i === stickyIndex && i + 1 < PROVIDERS.length) stickyIndex = i + 1;
     }
   }
   throw new AiProviderError(

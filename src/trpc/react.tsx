@@ -52,6 +52,11 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
         httpBatchStreamLink({
           transformer: SuperJSON,
           url: getBaseUrl() + "/api/trpc",
+          // Dziesiątki kart = dziesiątki zapytań `geo.geocode` w JEDNYM batchu GET.
+          // Przy ~130 ofertach URL rósł do ~20 kB i Next zwracał 431 (Request Header
+          // Fields Too Large) — wszystkie mapki padały. maxURLLength dzieli batch
+          // na kilka żądań zamiast jednego za długiego.
+          maxURLLength: 2083,
           headers: () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");

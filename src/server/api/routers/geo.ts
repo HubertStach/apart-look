@@ -42,32 +42,46 @@ async function throttled<T>(fn: () => Promise<T>): Promise<T> {
   return result;
 }
 
-async function geocode(street: string, city?: string | null): Promise<GeoResult | null> {
+async function geocode(
+  street?: string | null,
+  city?: string | null,
+  district?: string | null,
+): Promise<GeoResult | null> {
   // Nominatim nie rozpoznaje skróconych przedrostków ("ul. Długa" → brak wyniku),
   // a radzi sobie z samą nazwą ("Długa"). Usuwamy wiodący przedrostek.
-  const cleanedStreet = street
+  const cleanedStreet = (street ?? "")
     .replace(/^\s*(?:ul|ulica|ulicy|al|aleja|aleje|alei|os|osiedle|osiedla|pl|plac)\b\.?\s+/i, "")
     .trim();
-  if (!cleanedStreet) return null;
+  const districtTerm = (district ?? "").trim() === "null" ? "" : (district ?? "").trim();
   const cityTerm = (city ?? "").trim() === "null" ? "" : (city ?? "").trim();
   // Miasto OBOWIĄZKOWE: bez niego Nominatim trafiał w ulicę o tej samej nazwie
   // w innym mieście PL. Profil zawsze ma city (required), a persist je uzupełnia,
   // więc brak city = dane niekompletne → nie geokoduj (lepiej brak mapy niż zła).
   if (!cityTerm) return null;
+  // Bez ulicy geokodujemy dzielnicę (np. "Stare Miasto", "Zwierzyniec") — mapka
+  // pokaże okolicę zamiast pustki. Brak obu → nie ma czego szukać.
+  if (!cleanedStreet && !districtTerm) return null;
 
-  const key = `${cleanedStreet}|${cityTerm}`.toLowerCase();
+  const key = `${cleanedStreet}|${districtTerm}|${cityTerm}`.toLowerCase();
   if (cache.has(key)) return cache.get(key)!;
 
   const result = await throttled(async () => {
     const url = new URL(NOMINATIM_URL);
     url.searchParams.set("format", "jsonv2");
     url.searchParams.set("limit", "1");
-    // ZAPYTANIE STRUKTURALNE (street/city) zamiast wolnego `q`: wolne `q` z numerem
-    // domu potrafi dopasować POI ("Długa 12" → kawiarnia), przez co mapka pokazywała
-    // szkołę/lokal zamiast adresu. Parametr `street` (z ewentualnym numerem domu)
-    // ogranicza Nominatim do warstwy adresowej → zwraca ulicę/dom, nie POI.
-    url.searchParams.set("street", cleanedStreet);
-    if (cityTerm) url.searchParams.set("city", cityTerm);
+    if (cleanedStreet) {
+      // ZAPYTANIE STRUKTURALNE (street/city) zamiast wolnego `q`: wolne `q` z numerem
+      // domu potrafi dopasować POI ("Długa 12" → kawiarnia), przez co mapka pokazywała
+      // szkołę/lokal zamiast adresu. Parametr `street` (z ewentualnym numerem domu)
+      // ogranicza Nominatim do warstwy adresowej → zwraca ulicę/dom, nie POI.
+      url.searchParams.set("street", cleanedStreet);
+      // `q` i parametry strukturalne wykluczają się w Nominatim — `city` tylko tu.
+      url.searchParams.set("city", cityTerm);
+    } else {
+      // Fallback dzielnicowy: wolne `q = "dzielnica, miasto"` — bez numeru domu nie
+      // ma ryzyka POI, a `q` łapie osiedla/dzielnice, których pole `city` nie zna.
+      url.searchParams.set("q", `${districtTerm}, ${cityTerm}`);
+    }
     // Ograniczenie do Polski — ulica o tej samej nazwie istnieje w wielu krajach;
     // countrycodes=pl gwarantuje, że mapka nie wyskoczy poza PL (PLAN pkt 1).
     url.searchParams.set("countrycodes", "pl");
@@ -104,10 +118,16 @@ async function geocode(street: string, city?: string | null): Promise<GeoResult 
 }
 
 export const geoRouter = createTRPCRouter({
-  /** Zwraca współrzędne dla ulicy (opcjonalnie w mieście) lub null. */
+  /** Zwraca współrzędne dla ulicy lub (fallback) dzielnicy w mieście, lub null. */
   geocode: publicProcedure
-    .input(z.object({ street: z.string().min(2), city: z.string().nullish() }))
+    .input(
+      z.object({
+        street: z.string().nullish(),
+        city: z.string().nullish(),
+        district: z.string().nullish(),
+      }),
+    )
     .query(async ({ input }) => {
-      return geocode(input.street, input.city);
+      return geocode(input.street, input.city, input.district);
     }),
 });

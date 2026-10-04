@@ -12,17 +12,24 @@ import { api } from "~/trpc/react";
 export function ListingMap({
   street,
   city,
+  district,
 }: {
-  street: string;
+  street?: string | null;
   city?: string | null;
   district?: string | null;
 }) {
   // Zapytanie strukturalne do Nominatim (ulica + miasto) obsługiwane po stronie
   // serwera (geo.geocode). Numer domu w `street` uściśla dopasowanie do adresu,
   // a warstwa adresowa Nominatim eliminuje przypadkowe POI (szkoły, lokale).
+  // Bez ulicy serwer geokoduje dzielnicę (fallback) — mapka pokaże okolicę.
+  const label = street?.trim() ? street : district;
   const geo = api.geo.geocode.useQuery(
-    { street, city: city ?? undefined },
-    { staleTime: Infinity, retry: false, enabled: street.trim().length >= 2 },
+    { street, city: city ?? undefined, district: district ?? undefined },
+    {
+      staleTime: Infinity,
+      retry: false,
+      enabled: (street?.trim().length ?? 0) >= 2 || (district?.trim().length ?? 0) >= 2,
+    },
   );
 
   if (geo.isLoading) {
@@ -36,7 +43,7 @@ export function ListingMap({
   if (!geo.data) {
     return (
       <div className="flex h-full w-full items-center justify-center rounded-md bg-ecru text-xs text-mocha/50">
-        Nie udało się zlokalizować ulicy
+        Nie udało się zlokalizować adresu
       </div>
     );
   }
@@ -51,14 +58,14 @@ export function ListingMap({
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-md border border-linen">
       <iframe
-        title={`Mapa: ${street}`}
+        title={`Mapa: ${label}`}
         src={embedSrc}
         className="w-full flex-1"
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
       />
       <div className="flex shrink-0 items-center justify-between bg-ecru px-2 py-1 text-xs text-mocha/80">
-        <span className="truncate">📍 {street}</span>
+        <span className="truncate">📍 {label}</span>
         <a
           href={fullMap}
           target="_blank"

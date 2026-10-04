@@ -162,7 +162,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
       {/* KOLUMNA 3 — mapa */}
       <div className="min-w-0 flex-1 basis-0">
-        {listing.street ? (
+        {listing.street ?? listing.district ? (
           <ListingMap
             street={listing.street}
             city={listing.city}
@@ -170,7 +170,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center rounded-md bg-ecru text-center text-xs text-mocha/50">
-            brak ulicy — mapa niedostępna
+            brak adresu — mapa niedostępna
           </div>
         )}
       </div>

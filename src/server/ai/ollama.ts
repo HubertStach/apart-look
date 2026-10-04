@@ -49,7 +49,7 @@ export class OllamaProvider implements AiProvider {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 60_000);
+        const timeout = setTimeout(() => controller.abort(), 180_000);
         const res = await fetch(`${env.OLLAMA_URL}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,6 +58,14 @@ export class OllamaProvider implements AiProvider {
             model,
             stream: false,
             format: jsonSchema,
+            // Modele „thinking" (np. gemma4) domyslnie generuja blok rozumowania,
+            // ktorego i tak nie czytamy (bierzemy `message.content`) — a kosztuje
+            // 6-8x wiecej czasu: pomiar na gemma4:e4b to 57-141 s z myśleniem vs
+            // 9 s bez. Dla modeli bez tej zdolnosci pole jest ignorowane.
+            think: false,
+            // Model zostaje w pamieci miedzy ofertami i miedzy przebiegami —
+            // bez tego zimny zaladunek 9,6 GB dokladal ~140 s do pierwszej oferty.
+            keep_alive: "30m",
             options: { temperature: 0 },
             messages: [
               { role: "system", content: opts.system },

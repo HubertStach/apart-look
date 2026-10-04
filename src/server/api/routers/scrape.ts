@@ -98,15 +98,20 @@ export const scrapeRouter = createTRPCRouter({
   }),
 
   /**
-   * Czyści dane aktywnego profilu: usuwa wszystkie znalezione mieszkania
-   * (Listing) i przebiegi (ScrapeRun). PROFIL i jego ustawienia zostają.
+   * Czyści dane aktywnego profilu: ZATRZYMUJE trwający przebieg, a potem usuwa
+   * wszystkie znalezione mieszkania (Listing) i przebiegi (ScrapeRun).
+   * PROFIL i jego ustawienia zostają.
+   *
+   * Kolejność jest istotna: usunięcie `ScrapeRun` jest sygnałem stopu dla
+   * fire-and-forget pipeline'u (patrz `runPipeline`), więc musi nastąpić PRZED
+   * usunięciem ogłoszeń — inaczej oferta w locie dopisałaby się po czyszczeniu.
    */
   clear: publicProcedure.mutation(async ({ ctx }) => {
     const profileId = await getActiveProfileId(ctx.db);
     if (!profileId) return { listings: 0, runs: 0 };
 
-    const listings = await ctx.db.listing.deleteMany({ where: { profileId } });
     const runs = await ctx.db.scrapeRun.deleteMany({ where: { profileId } });
+    const listings = await ctx.db.listing.deleteMany({ where: { profileId } });
     return { listings: listings.count, runs: runs.count };
   }),
 });

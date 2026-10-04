@@ -59,8 +59,25 @@ const EMPTY_STATS: PipelineStats = {
 };
 
 /**
+ * Przebieg został anulowany: rekord `ScrapeRun` zniknął z bazy (przycisk
+ * „Wyczyść"). Usunięcie wiersza JEST sygnałem stopu — nie trzymamy osobnego
+ * rejestru anulowań w pamięci, bo baza i tak jest jedynym źródłem prawdy.
+ */
+class PipelineCancelledError extends Error {
+  constructor() {
+    super("Przebieg anulowany (wyczyszczono dane)");
+    this.name = "PipelineCancelledError";
+  }
+}
+
+/**
  * Uruchamia pipeline dla profilu i aktualizuje rekord ScrapeRun.
  * Wywoływane fire-and-forget z routera (bez await) — dlatego łapiemy wszystko.
+ *
+ * ANULOWANIE: `reportProgress` jest wołane przed każdym krokiem i przy każdej
+ * ofercie w `StreamProcessStep`, więc to naturalny punkt kontrolny. Gdy wiersz
+ * `ScrapeRun` już nie istnieje (usunęło go `scrape.clear`), rzucamy
+ * `PipelineCancelledError` i cały przebieg zwija się przez istniejący `catch`.
  */
 export async function runPipeline(
   db: PrismaClient,
@@ -75,10 +92,13 @@ export async function runPipeline(
     partial?: Partial<PipelineStats>,
   ) => {
     if (partial) Object.assign(stats, partial);
-    await db.scrapeRun.update({
+    // `updateMany` (nie `update`) nie rzuca, gdy wiersza nie ma — zwraca count 0,
+    // co jest dla nas sygnałem „przebieg anulowany".
+    const res = await db.scrapeRun.updateMany({
       where: { id: runId },
       data: { currentStep: step, statsJson: JSON.stringify(stats) },
     });
+    if (res.count === 0) throw new PipelineCancelledError();
   };
 
   try {
@@ -94,7 +114,7 @@ export async function runPipeline(
     stats.passed = result.active().length;
     stats.rejected = result.rejected().length;
 
-    await db.scrapeRun.update({
+    await db.scrapeRun.updateMany({
       where: { id: runId },
       data: {
         status: "DONE",
@@ -104,16 +124,24 @@ export async function runPipeline(
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[pipeline:${runId}] BŁĄD:`, err);
-    await db.scrapeRun.update({
-      where: { id: runId },
-      data: {
-        status: "ERROR",
-        error: message,
-        finishedAt: new Date(),
-      },
-    });
+    if (err instanceof PipelineCancelledError) {
+      // Przebieg przerwany przez użytkownika — nie ma czego i gdzie zapisywać
+      // (wiersz ScrapeRun już nie istnieje). Nie jest to błąd.
+      console.log(`[pipeline:${runId}] przerwany — dane wyczyszczone.`);
+    } else {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[pipeline:${runId}] BŁĄD:`, err);
+      // `updateMany` zamiast `update`: gdy wiersz zniknął w trakcie, nie chcemy
+      // drugiego wyjątku w fire-and-forget (nieobsłużone odrzucenie promise).
+      await db.scrapeRun.updateMany({
+        where: { id: runId },
+        data: {
+          status: "ERROR",
+          error: message,
+          finishedAt: new Date(),
+        },
+      });
+    }
   } finally {
     // Zamknij headless przeglądarkę (jeśli była użyta) — oszczędzamy RAM.
     const { closeBrowser } = await import("../scrapers/browser-fetch");

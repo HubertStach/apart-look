@@ -91,16 +91,20 @@ export class StreamProcessStep implements PipelineStep {
         };
       }
 
-      await persistListing(db, profile.id, l, profile.city);
       saved++;
       processed++;
-      // Raport postępu po każdym ogłoszeniu → UI odświeża listę na bieżąco.
+      // Raport postępu PRZED zapisem: UI odświeża listę na bieżąco, a jednocześnie
+      // jest to punkt kontrolny anulowania — gdy użytkownik kliknął „Wyczyść",
+      // `reportProgress` rzuca i nie dopisujemy już nic do świeżo wyczyszczonej bazy.
+      // ponytail: okno wyścigu zwężone do pary zapytań (raport → upsert); pełna
+      // szczelność wymagałaby transakcji obejmującej cały przebieg — zbędne lokalnie.
       await ctx.reportProgress(this.name, {
         aiChecked: processed,
         saved,
         passed: col.active().length,
         rejected: col.rejected().length,
       });
+      await persistListing(db, profile.id, l, profile.city);
     }
 
     ctx.log(`Selekcja strumieniowa: przetworzono ${processed} ofert, zapisano ${saved}.`);
